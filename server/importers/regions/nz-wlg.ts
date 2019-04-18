@@ -4,8 +4,12 @@ import config from '../../config'
 import BaseImporter from './BaseImporter'
 
 class MetlinkImporter extends BaseImporter {
-  zipname = 'metlink'
-  url = 'https://www.metlink.org.nz/assets/Google_Transit/google-transit.zip'
+  constructor() {
+    super()
+    this.zipname = 'metlink'
+    this.url =
+      'https://www.metlink.org.nz/assets/Google_Transit/google-transit.zip'
+  }
 
   async postImport() {
     const sqlRequest = await connection.get().request()
