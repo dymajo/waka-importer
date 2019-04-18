@@ -1,13 +1,15 @@
 /* eslint-disable promise/prefer-await-to-callbacks */
 
-const AWS = require('aws-sdk')
-const logger = require('../logger.js')
+import { DynamoDB } from 'aws-sdk'
+import logger from '../logger'
 
 class KeyvalueDynamo {
+  name: string
+  dynamo: DynamoDB
   constructor(props) {
     const { name, region } = props
     this.name = name
-    this.dynamo = new AWS.DynamoDB({ region })
+    this.dynamo = new DynamoDB({ region })
 
     this.flattenObject = this.flattenObject.bind(this)
     this.fattenObject = this.fattenObject.bind(this)
@@ -43,7 +45,7 @@ class KeyvalueDynamo {
     return response
   }
 
-  async get(key) {
+  async get(key: string) {
     const { name, dynamo, flattenObject } = this
     const params = {
       Key: {
@@ -125,4 +127,4 @@ class KeyvalueDynamo {
     })
   }
 }
-module.exports = KeyvalueDynamo
+export default KeyvalueDynamo

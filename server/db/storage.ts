@@ -1,4 +1,6 @@
-const fs = require('fs')
+import { createReadStream } from 'fs'
+import config from '../config'
+
 const azuretestcreds = [
   'devstoreaccount1',
   'Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==',
@@ -6,12 +8,15 @@ const azuretestcreds = [
 ]
 
 class Storage {
+  backing: string
+  s3: AWS.S3
   constructor(props) {
     this.backing = props.backing
     if (this.backing === 'azure') {
-      const azure = require('azure-storage')
-      const creds = props.local ? azuretestcreds : []
-      this.blobSvc = azure.createBlobService(...creds)
+      throw Error('azure not supported')
+      // const azure = require('azure-storage')
+      // const creds = props.local ? azuretestcreds : []
+      // this.blobSvc = azure.createBlobService(...creds)
     } else if (this.backing === 'aws') {
       const AWS = require('aws-sdk')
       this.s3 = new AWS.S3({
@@ -20,8 +25,9 @@ class Storage {
       })
     }
   }
-  createContainer(container, cb) {
-    const createCb = function(error) {
+
+  createContainer(container: string, cb) {
+    const createCb = error => {
       if (error) {
         console.error(error)
         throw error
@@ -29,7 +35,7 @@ class Storage {
       cb()
     }
     if (this.backing === 'azure') {
-      this.blobSvc.createContainerIfNotExists(container, createCb)
+      // this.blobSvc.createContainerIfNotExists(container, createCb)
     } else if (this.backing === 'aws') {
       const params = {
         Bucket: container,
@@ -37,10 +43,12 @@ class Storage {
       this.s3.createBucket(params, createCb)
     }
   }
+
   downloadStream(container, file, stream, callback) {
     if (this.backing === 'azure') {
-      return this.blobSvc.getBlobToStream(container, file, stream, callback)
-    } else if (this.backing === 'aws') {
+      // return this.blobSvc.getBlobToStream(container, file, stream, callback)
+    }
+    if (this.backing === 'aws') {
       const params = {
         Bucket: container,
         Key: file,
@@ -51,32 +59,35 @@ class Storage {
         .pipe(stream)
     }
   }
+
   uploadFile(container, file, sourcePath, callback) {
     if (this.backing === 'azure') {
-      return this.blobSvc.createBlockBlobFromLocalFile(
-        container,
-        file,
-        sourcePath,
-        callback
-      )
-    } else if (this.backing === 'aws') {
+      // return this.blobSvc.createBlockBlobFromLocalFile(
+      //   container,
+      //   file,
+      //   sourcePath,
+      //   callback
+      // )
+    }
+    if (this.backing === 'aws') {
       const params = {
-        Body: fs.createReadStream(sourcePath),
+        Body: createReadStream(sourcePath),
         Bucket: container,
         Key: file,
       }
       return this.s3.putObject(params, callback)
     }
   }
-  async upload(path) {
-    const { local } = global.config
-    if (local) {
-      await this.uploadLocal(path)
-    } else {
-      const AWS = require('aws-sdk')
-      this.s3 = new AWS.S3({})
-      await this.uploadToS3(path)
-    }
-  }
+
+  // async upload(path) {
+  //   const { local } = config
+  //   if (local) {
+  //     await this.uploadLocal(path)
+  //   } else {
+  //     const AWS = require('aws-sdk')
+  //     this.s3 = new AWS.S3({})
+  //     await this.uploadToS3(path)
+  //   }
+  // }
 }
-module.exports = Storage
+export default Storage

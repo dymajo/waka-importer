@@ -1,17 +1,18 @@
-const fs = require('fs')
-const path = require('path')
-const rimraf = require('rimraf')
-const sql = require('mssql')
-const fetch = require('node-fetch')
+import { createWriteStream, existsSync, mkdirSync } from 'fs'
+import { join, resolve as _resolve } from 'path'
+import * as rimraf from 'rimraf'
+import fetch from 'node-fetch'
 
-const log = require('../../logger.js')
-const GtfsImport = require('../../db/gtfs-import.js')
-const CreateShapes = require('../../db/create-shapes.js')
-const connection = require('../../db/connection.js')
-const Storage = require('../../db/storage.js')
-const KeyvalueDynamo = require('../../db/keyvalue-dynamo.js')
+import log from '../../logger'
+import GtfsImport from '../../db/gtfs-import'
+import CreateShapes from '../../db/create-shapes'
+import connection from '../../db/connection'
+import Storage from '../../db/storage'
+import KeyvalueDynamo from '../../db/keyvalue-dynamo'
+import config from '../../config'
+import Importer from './BaseImporter'
 
-const batch1 = {
+const bus1 = {
   buses1: { endpoint: 'buses/SMBSC001', type: 'bus' },
   buses2: { endpoint: 'buses/SMBSC002', type: 'bus' },
   buses3: { endpoint: 'buses/SMBSC003', type: 'bus' },
@@ -21,7 +22,7 @@ const batch1 = {
   buses7: { endpoint: 'buses/SMBSC007', type: 'bus' },
   buses8: { endpoint: 'buses/SMBSC008', type: 'bus' },
 }
-const batch2 = {
+const bus2 = {
   buses9: { endpoint: 'buses/SMBSC009', type: 'bus' },
   buses10: { endpoint: 'buses/SMBSC010', type: 'bus' },
   buses11: { endpoint: 'buses/SMBSC012', type: 'bus' },
@@ -31,7 +32,7 @@ const batch2 = {
   buses15: { endpoint: 'buses/OSMBSC001', type: 'bus' },
   buses16: { endpoint: 'buses/OSMBSC002', type: 'bus' },
 }
-const batch3 = {
+const bus3 = {
   buses17: { endpoint: 'buses/OSMBSC003', type: 'bus' },
   buses18: { endpoint: 'buses/OSMBSC004', type: 'bus' },
   buses19: { endpoint: 'buses/OSMBSC006', type: 'bus' },
@@ -41,16 +42,21 @@ const batch3 = {
   buses23: { endpoint: 'buses/OSMBSC010', type: 'bus' },
   buses24: { endpoint: 'buses/OSMBSC011', type: 'bus' },
 }
-const batch4 = {
+const bus4 = {
   buses25: { endpoint: 'buses/OSMBSC012', type: 'bus' },
   buses26: { endpoint: 'buses/NISC001', type: 'bus' },
   buses27: { endpoint: 'buses/ECR109', type: 'bus' },
+}
+
+const misc = {
   ferries: { endpoint: 'ferries', type: 'ferry' },
   lightrail1: { endpoint: 'lightrail/innerwest', type: 'lightrail' },
   lightrail2: { endpoint: 'lightrail/newcastle', type: 'lightrail' },
   trains1: { endpoint: 'nswtrains', type: 'train' },
   trains2: { endpoint: 'sydneytrains', type: 'train' },
+  metro: { endpoint: 'metro', type: 'metro' },
 }
+
 const files = [
   {
     name: 'agency.txt',
@@ -91,6 +97,11 @@ const files = [
 const shapeFile = 'shapes.txt'
 
 class TfNSWImporter {
+  importer: any
+  storage: any
+  versions: any
+  zipLocations: any
+
   constructor(props) {
     this.importer = new GtfsImport()
     this.storage = new Storage({})
@@ -130,11 +141,11 @@ class TfNSWImporter {
         const { endpoint, type } = batch[mode]
 
         const zipLocation = {
-          p: path.join(__dirname, `../../../cache/${mode}.zip`),
+          p: join(__dirname, `../../../cache/${mode}.zip`),
           type,
           endpoint,
         }
-        log(global.config.prefix.magenta, 'Downloading GTFS Data')
+        log(config.prefix.magenta, 'Downloading GTFS Data')
         try {
           const res = await fetch(
             `https://api.transport.nsw.gov.au/v1/gtfs/schedule/${endpoint}`,
@@ -146,7 +157,7 @@ class TfNSWImporter {
           )
           if (res.ok) {
             await new Promise((resolve, reject) => {
-              const dest = fs.createWriteStream(zipLocation.p)
+              const dest = createWriteStream(zipLocation.p)
               res.body.pipe(dest)
               res.body.on('error', err => {
                 reject(err)
@@ -178,13 +189,15 @@ class TfNSWImporter {
       return new Promise(resolve => setTimeout(resolve, ms))
     }
 
-    await this.get(batch1)
-    await timeout(2000)
-    await this.get(batch2)
-    await timeout(2000)
-    await this.get(batch3)
-    await timeout(2000)
-    await this.get(batch4)
+    // await this.get(bus1)
+    // await timeout(2000)
+    // await this.get(bus2)
+    // await timeout(2000)
+    // await this.get(bus3)
+    // await timeout(2000)
+    // await this.get(bus4)
+    // await timeout(2000)
+    await this.get(misc)
   }
 
   async unzip() {
@@ -207,7 +220,7 @@ class TfNSWImporter {
           await this.importer.upload(
             `${p}unarchived`,
             file,
-            global.config.version,
+            config.version,
             file.versioned,
             endpoint,
             true
@@ -222,44 +235,44 @@ class TfNSWImporter {
   async shapes() {
     const { zipLocations } = this
     for (const { p } of zipLocations) {
-      if (!fs.existsSync(p)) {
+      if (!existsSync(p)) {
         console.warn('Shapes could not be found!')
         return
       }
       const creator = new CreateShapes()
-      const inputDir = path.resolve(`${p}unarchived`, 'shapes.txt')
-      const outputDir = path.resolve(`${p}unarchived`, 'shapes')
-      const outputDir2 = path.resolve(outputDir, global.config.version)
+      const inputDir = _resolve(`${p}unarchived`, 'shapes.txt')
+      const outputDir = _resolve(`${p}unarchived`, 'shapes')
+      const outputDir2 = _resolve(outputDir, config.version)
 
       // make sure the old output dir exists
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir)
+      if (!existsSync(outputDir)) {
+        mkdirSync(outputDir)
       }
 
       // cleans up old import if exists
-      if (fs.existsSync(outputDir2)) {
+      if (existsSync(outputDir2)) {
         await new Promise((resolve, reject) => {
           rimraf(outputDir2, resolve)
         })
       }
-      fs.mkdirSync(outputDir2)
+      mkdirSync(outputDir2)
 
       // creates the new datas
-      await creator.create(inputDir, outputDir, [global.config.version])
+      await creator.create(inputDir, outputDir, [config.version])
 
-      const containerName = `${global.config.prefix}-${global.config.version}`
+      const containerName = `${config.prefix}-${config.version}`
         .replace('.', '-')
         .replace('_', '-')
       await creator.upload(
-        global.config.shapesContainer,
-        path.resolve(outputDir, global.config.version)
+        config.shapesContainer,
+        _resolve(outputDir, config.version)
       )
     }
   }
 
   async fixStopCodes() {
     // GTFS says it's optional, but Waka uses stop_code for stop lookups
-    const sqlRequest = connection.get().request()
+    const sqlRequest = await connection.get().request()
     const res = await sqlRequest.query(`
       UPDATE stops
       SET stop_code = stop_id
@@ -267,10 +280,10 @@ class TfNSWImporter {
     `)
     const rows = res.rowsAffected[0]
     log(
-      `${global.config.prefix} ${global.config.version}`.magenta,
+      `${config.prefix} ${config.version}`.magenta,
       `Updated ${rows} null stop codes`
     )
   }
 }
 
-module.exports = TfNSWImporter
+export default TfNSWImporter

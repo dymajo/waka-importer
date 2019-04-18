@@ -1,17 +1,28 @@
-const fs = require('fs')
-const path = require('path')
-const rimraf = require('rimraf')
-const sql = require('mssql')
+import { existsSync, mkdirSync } from 'fs'
+import { join, resolve as _resolve } from 'path'
+import * as rimraf from 'rimraf'
+import { VarChar } from 'mssql'
 
-const log = require('../logger.js')
-const GtfsImport = require('../db/gtfs-import.js')
-const CreateShapes = require('../db/create-shapes.js')
-const connection = require('../db/connection.js')
-const Storage = require('../db/storage.js')
-const KeyvalueDynamo = require('../db/keyvalue-dynamo.js')
+import log from '../logger'
+import GtfsImport from '../db/gtfs-import'
+import CreateShapes from '../db/create-shapes'
+import connection from '../db/connection'
+import Storage from '../db/storage'
+import KeyvalueDynamo from '../db/keyvalue-dynamo'
+import config from '../config'
+import BaseImporter from './regions/BaseImporter'
 
 class Importer {
-  constructor(props) {
+  public importer: GtfsImport
+  public storage: Storage
+  public versions: KeyvalueDynamo | null
+  public current: BaseImporter | null
+
+  constructor(props: {
+    keyvalue: string
+    keyvalueVersionTable: string
+    keyvalueRegion: string
+  }) {
     this.importer = new GtfsImport()
     this.storage = new Storage({})
 
@@ -26,12 +37,12 @@ class Importer {
 
     this.current = null
     try {
-      this.current = require(`./regions/${global.config.prefix}.js`)
+      this.current = require(`./regions/${config.prefix}`)
     } catch (err) {
       log(
         'fatal error'.red,
         'Could not find an importer in ',
-        path.join(__dirname, './regions', `${global.config.prefix}.js`)
+        join(__dirname, './regions', `${config.prefix}`)
       )
     }
   }
@@ -42,7 +53,7 @@ class Importer {
     }
 
     const { versions } = this
-    const versionId = global.config.db.database
+    const versionId = config.db.database
     if (versions) {
       const version = await versions.get(versionId)
       let newStatus
@@ -101,57 +112,57 @@ class Importer {
       await this.importer.upload(
         `${this.current.zipLocation}unarchived`,
         file,
-        global.config.version,
+        config.version,
         file.versioned
       )
     }
   }
 
   async shapes() {
-    if (!fs.existsSync(this.current.zipLocation)) {
+    if (!existsSync(this.current.zipLocation)) {
       console.warn('Shapes could not be found!')
       return
     }
 
     const creator = new CreateShapes()
-    const inputDir = path.resolve(
+    const inputDir = _resolve(
       `${this.current.zipLocation}unarchived`,
       'shapes.txt'
     )
-    const outputDir = path.resolve(
+    const outputDir = _resolve(
       `${this.current.zipLocation}unarchived`,
       'shapes'
     )
-    const outputDir2 = path.resolve(outputDir, global.config.version)
+    const outputDir2 = _resolve(outputDir, config.version)
 
     // make sure the old output dir exists
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir)
+    if (!existsSync(outputDir)) {
+      mkdirSync(outputDir)
     }
 
     // cleans up old import if exists
-    if (fs.existsSync(outputDir2)) {
+    if (existsSync(outputDir2)) {
       await new Promise((resolve, reject) => {
         rimraf(outputDir2, resolve)
       })
     }
-    fs.mkdirSync(outputDir2)
+    mkdirSync(outputDir2)
 
     // creates the new datas
-    await creator.create(inputDir, outputDir, [global.config.version])
+    await creator.create(inputDir, outputDir, [config.version])
 
-    const containerName = `${global.config.prefix}-${global.config.version}`
+    const containerName = `${config.prefix}-${config.version}`
       .replace('.', '-')
       .replace('_', '-')
     await creator.upload(
-      global.config.shapesContainer,
-      path.resolve(outputDir, global.config.version)
+      config.shapesContainer,
+      _resolve(outputDir, config.version)
     )
   }
 
   async fixStopCodes() {
     // GTFS says it's optional, but Waka uses stop_code for stop lookups
-    const sqlRequest = connection.get().request()
+    const sqlRequest = await connection.get().request()
     const res = await sqlRequest.query(`
       UPDATE stops
       SET stop_code = stop_id
@@ -159,7 +170,7 @@ class Importer {
     `)
     const rows = res.rowsAffected[0]
     log(
-      `${global.config.prefix} ${global.config.version}`.magenta,
+      `${config.prefix} ${config.version}`.magenta,
       `Updated ${rows} null stop codes`
     )
   }
@@ -171,11 +182,11 @@ class Importer {
   }
 
   async exportDb() {
-    const sqlRequest = connection.get().request()
+    const sqlRequest = await connection.get().request()
     const {
       db: { database },
-    } = global.config
-    sqlRequest.input('dbName', sql.VarChar, database)
+    } = config
+    sqlRequest.input('dbName', VarChar, database)
     try {
       await sqlRequest.query(
         `
@@ -192,4 +203,4 @@ class Importer {
     }
   }
 }
-module.exports = Importer
+export default Importer

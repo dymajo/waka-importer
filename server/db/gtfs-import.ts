@@ -1,12 +1,13 @@
-const sql = require('mssql')
-const extract = require('extract-zip')
-const csvparse = require('csv-parse')
-const transform = require('stream-transform')
-const fs = require('fs')
-const path = require('path')
-const util = require('util')
-const connection = require('./connection.js')
-const log = require('../logger.js')
+import { Table, VarChar, Decimal, Int, Time, Bit, Date as _Date } from 'mssql'
+import extract from 'extract-zip'
+import * as csvparse from 'csv-parse'
+import transform from 'stream-transform'
+import { createReadStream } from 'fs'
+import { resolve as _resolve } from 'path'
+import { promisify } from 'util'
+import connection from './connection'
+import log from '../logger'
+import config from '../config'
 
 const primaryKeys = {
   agency: 'agency_id',
@@ -98,103 +99,103 @@ const schemas = {
 class GtfsImport {
   async unzip(location) {
     log('Unzipping GTFS Data')
-    const extractor = util.promisify(extract)
+    const extractor = promisify(extract)
 
-    await extractor(location, { dir: path.resolve(`${location}unarchived`) })
+    await extractor(location, { dir: _resolve(`${location}unarchived`) })
   }
 
-  getTable(name, hashName, hash = false) {
+  getTable(name: string, hashName?: string, hash = false) {
     let newName = name
     if (hash) {
       newName = `${hashName}`
     }
-    const table = new sql.Table(newName)
+    const table = new Table(newName)
     if (hash) {
       table.create = true
     }
     if (name === 'agency') {
-      table.columns.add('agency_id', sql.VarChar(50), { nullable: false })
-      table.columns.add('agency_name', sql.VarChar(100), { nullable: false })
-      table.columns.add('agency_url', sql.VarChar(100), { nullable: false })
-      table.columns.add('agency_timezone', sql.VarChar(100), {
+      table.columns.add('agency_id', VarChar(50), { nullable: false })
+      table.columns.add('agency_name', VarChar(100), { nullable: false })
+      table.columns.add('agency_url', VarChar(100), { nullable: false })
+      table.columns.add('agency_timezone', VarChar(100), {
         nullable: false,
       })
-      table.columns.add('agency_lang', sql.VarChar(50), { nullable: true })
-      table.columns.add('agency_phone', sql.VarChar(50), { nullable: true })
-      table.columns.add('agency_fare_url', sql.VarChar(100), {
+      table.columns.add('agency_lang', VarChar(50), { nullable: true })
+      table.columns.add('agency_phone', VarChar(50), { nullable: true })
+      table.columns.add('agency_fare_url', VarChar(100), {
         nullable: true,
       })
-      table.columns.add('agency_email', sql.VarChar(50), { nullable: true })
+      table.columns.add('agency_email', VarChar(50), { nullable: true })
     } else if (name === 'stops') {
-      table.columns.add('stop_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('stop_code', sql.VarChar(50), { nullable: true })
-      table.columns.add('stop_name', sql.VarChar(100), { nullable: false })
-      table.columns.add('stop_desc', sql.VarChar(150), { nullable: true })
-      table.columns.add('stop_lat', sql.Decimal(10, 6), { nullable: false })
-      table.columns.add('stop_lon', sql.Decimal(10, 6), { nullable: false })
-      table.columns.add('zone_id', sql.VarChar(50), { nullable: true })
-      table.columns.add('stop_url', sql.VarChar(100), { nullable: true })
-      table.columns.add('location_type', sql.Int, { nullable: true })
-      table.columns.add('parent_station', sql.VarChar(100), { nullable: true })
-      table.columns.add('stop_timezone', sql.VarChar(100), { nullable: true })
-      table.columns.add('wheelchair_boarding', sql.Int, { nullable: true })
+      table.columns.add('stop_id', VarChar(100), { nullable: false })
+      table.columns.add('stop_code', VarChar(50), { nullable: true })
+      table.columns.add('stop_name', VarChar(100), { nullable: false })
+      table.columns.add('stop_desc', VarChar(150), { nullable: true })
+      table.columns.add('stop_lat', Decimal(10, 6), { nullable: false })
+      table.columns.add('stop_lon', Decimal(10, 6), { nullable: false })
+      table.columns.add('zone_id', VarChar(50), { nullable: true })
+      table.columns.add('stop_url', VarChar(100), { nullable: true })
+      table.columns.add('location_type', Int, { nullable: true })
+      table.columns.add('parent_station', VarChar(100), { nullable: true })
+      table.columns.add('stop_timezone', VarChar(100), { nullable: true })
+      table.columns.add('wheelchair_boarding', Int, { nullable: true })
     } else if (name === 'routes') {
-      table.columns.add('route_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('agency_id', sql.VarChar(100), { nullable: true })
-      table.columns.add('route_short_name', sql.VarChar(50), {
+      table.columns.add('route_id', VarChar(100), { nullable: false })
+      table.columns.add('agency_id', VarChar(100), { nullable: true })
+      table.columns.add('route_short_name', VarChar(50), {
         nullable: false,
       })
-      table.columns.add('route_long_name', sql.VarChar(150), {
+      table.columns.add('route_long_name', VarChar(150), {
         nullable: false,
       })
-      table.columns.add('route_desc', sql.VarChar(150), { nullable: true })
-      table.columns.add('route_type', sql.Int, { nullable: false })
-      table.columns.add('route_url', sql.VarChar(100), { nullable: true })
-      table.columns.add('route_color', sql.VarChar(50), { nullable: true })
-      table.columns.add('route_text_color', sql.VarChar(50), {
+      table.columns.add('route_desc', VarChar(150), { nullable: true })
+      table.columns.add('route_type', Int, { nullable: false })
+      table.columns.add('route_url', VarChar(100), { nullable: true })
+      table.columns.add('route_color', VarChar(50), { nullable: true })
+      table.columns.add('route_text_color', VarChar(50), {
         nullable: true,
       })
     } else if (name === 'trips') {
-      table.columns.add('route_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('service_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('trip_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('trip_headsign', sql.VarChar(100), { nullable: true })
-      table.columns.add('trip_short_name', sql.VarChar(50), { nullable: true })
-      table.columns.add('direction_id', sql.Int, { nullable: true })
-      table.columns.add('block_id', sql.VarChar(100), { nullable: true })
-      table.columns.add('shape_id', sql.VarChar(100), { nullable: true })
-      table.columns.add('wheelchair_accessible', sql.Int, { nullable: true })
-      table.columns.add('bikes_allowed', sql.Int, { nullable: true })
+      table.columns.add('route_id', VarChar(100), { nullable: false })
+      table.columns.add('service_id', VarChar(100), { nullable: false })
+      table.columns.add('trip_id', VarChar(100), { nullable: false })
+      table.columns.add('trip_headsign', VarChar(100), { nullable: true })
+      table.columns.add('trip_short_name', VarChar(50), { nullable: true })
+      table.columns.add('direction_id', Int, { nullable: true })
+      table.columns.add('block_id', VarChar(100), { nullable: true })
+      table.columns.add('shape_id', VarChar(100), { nullable: true })
+      table.columns.add('wheelchair_accessible', Int, { nullable: true })
+      table.columns.add('bikes_allowed', Int, { nullable: true })
     } else if (name === 'stop_times') {
-      table.columns.add('trip_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('arrival_time', sql.Time(0), { nullable: false })
-      table.columns.add('departure_time', sql.Time(0), { nullable: false })
-      table.columns.add('arrival_time_24', sql.Bit, { nullable: false })
-      table.columns.add('departure_time_24', sql.Bit, { nullable: false })
-      table.columns.add('stop_id', sql.VarChar(50), { nullable: false })
-      table.columns.add('stop_sequence', sql.Int, { nullable: false })
-      table.columns.add('stop_headsign', sql.VarChar(50), { nullable: true })
-      table.columns.add('pickup_type', sql.Int, { nullable: true })
-      table.columns.add('drop_off_type', sql.Int, { nullable: true })
-      table.columns.add('shape_dist_traveled', sql.VarChar(50), {
+      table.columns.add('trip_id', VarChar(100), { nullable: false })
+      table.columns.add('arrival_time', Time(0), { nullable: false })
+      table.columns.add('departure_time', Time(0), { nullable: false })
+      table.columns.add('arrival_time_24', Bit, { nullable: false })
+      table.columns.add('departure_time_24', Bit, { nullable: false })
+      table.columns.add('stop_id', VarChar(50), { nullable: false })
+      table.columns.add('stop_sequence', Int, { nullable: false })
+      table.columns.add('stop_headsign', VarChar(50), { nullable: true })
+      table.columns.add('pickup_type', Int, { nullable: true })
+      table.columns.add('drop_off_type', Int, { nullable: true })
+      table.columns.add('shape_dist_traveled', VarChar(50), {
         nullable: true,
       })
-      table.columns.add('timepoint', sql.Int, { nullable: true })
+      table.columns.add('timepoint', Int, { nullable: true })
     } else if (name === 'calendar') {
-      table.columns.add('service_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('monday', sql.Bit, { nullable: false })
-      table.columns.add('tuesday', sql.Bit, { nullable: false })
-      table.columns.add('wednesday', sql.Bit, { nullable: false })
-      table.columns.add('thursday', sql.Bit, { nullable: false })
-      table.columns.add('friday', sql.Bit, { nullable: false })
-      table.columns.add('saturday', sql.Bit, { nullable: false })
-      table.columns.add('sunday', sql.Bit, { nullable: false })
-      table.columns.add('start_date', sql.Date, { nullable: false })
-      table.columns.add('end_date', sql.Date, { nullable: false })
+      table.columns.add('service_id', VarChar(100), { nullable: false })
+      table.columns.add('monday', Bit, { nullable: false })
+      table.columns.add('tuesday', Bit, { nullable: false })
+      table.columns.add('wednesday', Bit, { nullable: false })
+      table.columns.add('thursday', Bit, { nullable: false })
+      table.columns.add('friday', Bit, { nullable: false })
+      table.columns.add('saturday', Bit, { nullable: false })
+      table.columns.add('sunday', Bit, { nullable: false })
+      table.columns.add('start_date', _Date, { nullable: false })
+      table.columns.add('end_date', _Date, { nullable: false })
     } else if (name === 'calendar_dates') {
-      table.columns.add('service_id', sql.VarChar(100), { nullable: false })
-      table.columns.add('date', sql.Date, { nullable: false })
-      table.columns.add('exception_type', sql.Int, { nullable: false })
+      table.columns.add('service_id', VarChar(100), { nullable: false })
+      table.columns.add('date', _Date, { nullable: false })
+      table.columns.add('exception_type', Int, { nullable: false })
     } else {
       return null
     }
@@ -259,15 +260,15 @@ class GtfsImport {
     })
   }
 
-  async mergeFirst(location, config, version, containsVersion, endpoint) {
-    const hashName = `temp_${config.table}`
-    let table = this.getTable(config.table, hashName, true)
-    const finalTable = this.getTable(config.table)
+  async mergeFirst(location, file, version, containsVersion, endpoint) {
+    const hashName = `temp_${file.table}`
+    let table = this.getTable(file.table, hashName, true)
+    const finalTable = this.getTable(file.table)
     if (table === null) return null
 
-    const logstr = config.table.toString().yellow
+    const logstr = file.table.toString().yellow
     return new Promise((resolve, reject) => {
-      const input = fs.createReadStream(path.resolve(location, config.name))
+      const input = createReadStream(_resolve(location, file.name))
       input.on('error', reject)
       const parser = csvparse({ delimiter: ',' })
       let headers = null
@@ -287,7 +288,7 @@ class GtfsImport {
 
           const processRow = async () => {
             if (row && row.length > 1) {
-              const tableSchema = schemas[config.table]
+              const tableSchema = schemas[file.table]
               if (tableSchema) {
                 const record = this._mapRowToRecord(row, headers, tableSchema)
 
@@ -308,7 +309,7 @@ class GtfsImport {
           }
 
           // assembles our CSV into JSON
-          if (transactions < global.config.db.transactionLimit) {
+          if (transactions < config.db.transactionLimit) {
             processRow()
             callback(null)
           } else {
@@ -319,7 +320,7 @@ class GtfsImport {
               transactions = 0
               // await this.mergeToFinal(config.table, hashName)
               // log(endpoint, logstr, 'Merge Committed.')
-              table = this.getTable(config.table)
+              table = this.getTable(file.table)
               processRow()
               callback(null)
             } catch (err) {
@@ -330,16 +331,17 @@ class GtfsImport {
         { parallel: 1 }
       )
       transformer.on('finish', async () => {
-        let transactionsStr = totalTransactions
-        if (transactionsStr > 1000) {
-          transactionsStr = `${Math.round(transactionsStr / 1000)}k`
-        }
+        const transactionsStr =
+          totalTransactions > 1000
+            ? `${Math.round(totalTransactions / 1000)}l`
+            : `${totalTransactions}`
+
         log(endpoint, logstr, transactionsStr, 'Rows')
         try {
           await this.commit(table)
 
           log(endpoint, logstr, 'Transaction Committed.')
-          await this.mergeToFinal(config.table, hashName)
+          await this.mergeToFinal(file.table)
           log(endpoint, logstr, 'Merge Committed.')
           resolve()
         } catch (error) {
@@ -352,27 +354,21 @@ class GtfsImport {
   }
 
   async upload(
-    location,
-    config,
-    version,
-    containsVersion,
-    endpoint,
-    merge = false
+    location: string,
+    file: { table: string; name: string },
+    version: string,
+    containsVersion: boolean,
+    endpoint?: string,
+    merge: boolean = false
   ) {
     if (merge) {
-      return this.mergeFirst(
-        location,
-        config,
-        version,
-        containsVersion,
-        endpoint
-      )
+      return this.mergeFirst(location, file, version, containsVersion, endpoint)
     }
-    let table = this.getTable(config.table)
+    let table = this.getTable(file.table)
     if (table === null) return null
-    const logstr = config.table.toString().magenta
+    const logstr = file.table.toString().magenta
     return new Promise((resolve, reject) => {
-      const input = fs.createReadStream(path.resolve(location, config.name))
+      const input = createReadStream(_resolve(location, file.name))
       input.on('error', reject)
       const parser = csvparse({ delimiter: ',' })
       let headers = null
@@ -392,7 +388,7 @@ class GtfsImport {
 
           const processRow = async () => {
             if (row && row.length > 1) {
-              const tableSchema = schemas[config.table]
+              const tableSchema = schemas[file.table]
               if (tableSchema) {
                 const record = this._mapRowToRecord(row, headers, tableSchema)
 
@@ -413,7 +409,7 @@ class GtfsImport {
           }
 
           // assembles our CSV into JSON
-          if (transactions < global.config.db.transactionLimit) {
+          if (transactions < config.db.transactionLimit) {
             processRow()
             callback(null)
           } else {
@@ -423,7 +419,7 @@ class GtfsImport {
               log(endpoint, logstr, 'Transaction Committed.')
               transactions = 0
 
-              table = this.getTable(config.table)
+              table = this.getTable(file.table)
               processRow()
               callback(null)
             } catch (err) {
@@ -434,10 +430,10 @@ class GtfsImport {
         { parallel: 1 }
       )
       transformer.on('finish', async () => {
-        let transactionsStr = totalTransactions
-        if (transactionsStr > 1000) {
-          transactionsStr = `${Math.round(transactionsStr / 1000)}k`
-        }
+        const transactionsStr =
+          totalTransactions > 1000
+            ? `${Math.round(totalTransactions / 1000)}l`
+            : `${totalTransactions}`
         log(endpoint, logstr, transactionsStr, 'Rows')
         try {
           await this.commit(table)
@@ -453,7 +449,7 @@ class GtfsImport {
     })
   }
 
-  async commit(table) {
+  async commit(table: Table) {
     try {
       const result = await connection
         .get()
@@ -464,7 +460,7 @@ class GtfsImport {
     }
   }
 
-  async mergeToFinal(table) {
+  async mergeToFinal(table: string) {
     const hashTable = `temp_${table}`
     const primaryKey = primaryKeys[table]
     const sqlRequest = connection.get().request()
@@ -488,4 +484,4 @@ class GtfsImport {
     // DROP TABLE ${hashTable};
   }
 }
-module.exports = GtfsImport
+export default GtfsImport

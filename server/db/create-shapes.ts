@@ -1,22 +1,31 @@
-const fs = require('fs')
-const path = require('path')
-const csvparse = require('csv-parse')
-const transform = require('stream-transform')
-const colors = require('colors')
-const log = require('../logger.js')
-const Storage = require('./storage.js')
+import {
+  createReadStream,
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  readdir,
+} from 'fs'
+import { resolve as _resolve } from 'path'
+import * as csvparse from 'csv-parse'
+import transform from 'stream-transform'
+import * as colors from 'colors'
+import log from '../logger'
+import Storage from './storage'
+import config from '../config'
 
 class CreateShapes {
+  storageSvc: Storage
   constructor() {
     this.storageSvc = new Storage({
-      backing: global.config.storageService,
-      local: global.config.emulatedStorage,
-      region: global.config.shapesRegion,
+      backing: config.storageService,
+      local: config.emulatedStorage,
+      region: config.shapesRegion,
     })
   }
+
   create(inputFile, outputDirectory, versions) {
     return new Promise((resolve, reject) => {
-      const input = fs.createReadStream(inputFile)
+      const input = createReadStream(inputFile)
       const parser = csvparse({ delimiter: ',' })
 
       const output = {}
@@ -60,12 +69,12 @@ class CreateShapes {
                 subfolder = version
               }
             })
-            const dir = path.resolve(outputDirectory, subfolder)
-            if (!fs.existsSync(dir)) {
-              fs.mkdirSync(dir)
+            const dir = _resolve(outputDirectory, subfolder)
+            if (!existsSync(dir)) {
+              mkdirSync(dir)
             }
-            fs.writeFileSync(
-              path.resolve(dir, `${Buffer.from(key).toString('base64')}.json`),
+            writeFileSync(
+              _resolve(dir, `${Buffer.from(key).toString('base64')}.json`),
               JSON.stringify(output[key])
             )
           })
@@ -81,9 +90,9 @@ class CreateShapes {
     })
   }
 
-  upload(container, directory) {
+  upload(container: string, directory: string) {
     return new Promise((resolve, reject) => {
-      if (global.config.shapesSkip === true) {
+      if (config.shapesSkip === true) {
         log('Skipping Shapes Upload.')
         return resolve()
       }
@@ -95,12 +104,12 @@ class CreateShapes {
         }
 
         const fileName = files[index]
-        const key = `${global.config.prefix}/${directory
+        const key = `${config.prefix}/${directory
           .split('/')
           .slice(-1)[0]
           .replace('_', '-')
           .replace('.', '-')}/${fileName}`
-        const fileLocation = path.resolve(directory, fileName)
+        const fileLocation = _resolve(directory, fileName)
         this.storageSvc.uploadFile(container, key, fileLocation, error => {
           if (error) {
             console.error(
@@ -118,13 +127,13 @@ class CreateShapes {
         return true
       }
 
-      fs.readdir(directory, (err, files) => {
+      readdir(directory, (err, files) => {
         if (err) {
-          console.error(object)
+          console.error(err)
         }
         uploadSingle(files, 0, uploadSingle)
       })
     })
   }
 }
-module.exports = CreateShapes
+export default CreateShapes
