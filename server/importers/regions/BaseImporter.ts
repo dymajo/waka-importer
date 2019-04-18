@@ -14,7 +14,10 @@ abstract class BaseImporter {
   zipLocation: string
   downloadOptions: { url: string }
 
-  constructor() {
+  constructor(props) {
+    const { zipname, url } = props
+    this.zipname = zipname
+    this.url = url
     this.files = [
       {
         name: 'agency.txt',
