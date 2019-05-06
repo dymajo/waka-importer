@@ -97,13 +97,6 @@ const schemas = {
 }
 
 class GtfsImport {
-  async unzip(location) {
-    log('Unzipping GTFS Data')
-    const extractor = promisify(extract)
-
-    await extractor(location, { dir: _resolve(`${location}unarchived`) })
-  }
-
   getTable(name: string, hashName?: string, hash = false) {
     let newName = name
     if (hash) {

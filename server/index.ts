@@ -9,7 +9,16 @@ import config from './config'
 log('Importer Started')
 
 Object.keys(config).forEach(key => {
-  if (config[key] === undefined) {
+  if (config.tfnswApiKey === undefined && sydney) {
+    throw new Error('no api key for sydney')
+  }
+  if (
+    config[key] === undefined &&
+    key !== 'keyValue' &&
+    key !== 'keyValueVersionTable' &&
+    key !== 'keyValueRegion' &&
+    key !== 'tfnswApiKey'
+  ) {
     throw new Error(`Variable ${key} was undefined.`)
   }
   return true
@@ -36,20 +45,11 @@ const start = async () => {
   }
 
   log('Worker Ready')
-  let importer
-  if (config.prefix === 'au-syd') {
-    importer = new TfNSWImporter({
-      keyvalue: config.keyValue,
-      keyvalueVersionTable: config.keyValueVersionTable,
-      keyvalueRegion: config.keyValueRegion,
-    })
-  } else {
-    importer = new Importer({
-      keyvalue: config.keyValue,
-      keyvalueVersionTable: config.keyValueVersionTable,
-      keyvalueRegion: config.keyValueRegion,
-    })
-  }
+  const importer = new Importer({
+    keyvalue: config.keyValue,
+    keyvalueVersionTable: config.keyValueVersionTable,
+    keyvalueRegion: config.keyValueRegion,
+  })
   const { mode } = config
   console.log(mode)
   if (mode === 'all') {

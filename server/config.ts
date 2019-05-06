@@ -20,6 +20,7 @@ const {
   SHAPES_REGION,
   SHAPES_SKIP,
   EMULATED_STORAGE,
+  TFNSW_API_KEY,
 } = process.env
 
 const config: IWakaConfig = {
@@ -34,6 +35,8 @@ const config: IWakaConfig = {
   keyValue: KEYVALUE,
   keyValueVersionTable: KEYVALUE_VERSION_TABLE,
   keyValueRegion: KEYVALUE_REGION,
+  tfnswApiKey: TFNSW_API_KEY,
+
   db: {
     user: DB_USER,
     password: DB_PASSWORD,

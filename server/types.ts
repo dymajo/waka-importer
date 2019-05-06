@@ -8,9 +8,10 @@ export interface IWakaConfig {
   shapesSkip: boolean
   emulatedStorage: boolean
   local?: boolean
-  keyValue: string
-  keyValueVersionTable: string
-  keyValueRegion: string
+  keyValue?: string
+  keyValueVersionTable?: string
+  keyValueRegion?: string
+  tfnswApiKey: string
   db: {
     user: string
     password: string

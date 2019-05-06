@@ -12,6 +12,30 @@ import KeyvalueDynamo from '../db/keyvalue-dynamo'
 import config from '../config'
 import BaseImporter from './regions/BaseImporter'
 
+import ATImporter from './regions/nz-akl'
+import ChchImporter from './regions/nz-chc'
+import OtagoImporter from './regions/nz-otg'
+import TCImporter from './regions/au-cbr'
+import TfNSWImporter from './regions/au-syd'
+import MetlinkImporter from './regions/nz-wlg'
+import PTVImporter from './regions/au-mel'
+import RATPImporter from './regions/fr-par'
+import SEQImporter from './regions/au-seq'
+import SBBCFFFFSImporter from './regions/ch-sfr'
+
+const regions = {
+  'nz-akl': ATImporter,
+  'nz-chc': ChchImporter,
+  'nz-otg': OtagoImporter,
+  'nz-wlg': MetlinkImporter,
+  'au-seq': SEQImporter,
+  'au-mel': PTVImporter,
+  'fr-par': RATPImporter,
+  'ch-sfr': SBBCFFFFSImporter,
+  'au-syd': TfNSWImporter,
+  'au-cbr': TCImporter,
+}
+
 class Importer {
   public importer: GtfsImport
   public storage: Storage
@@ -80,6 +104,7 @@ class Importer {
     }
     await this.shapes()
     await this.fixStopCodes()
+    await this.fixRoutes()
     await this.postImport()
     // await this.exportDb()
 
@@ -172,6 +197,20 @@ class Importer {
     log(
       `${config.prefix} ${config.version}`.magenta,
       `Updated ${rows} null stop codes`
+    )
+  }
+
+  async fixRoutes() {
+    const sqlRequest = connection.get().request()
+    const res = await sqlRequest.query(`
+      UPDATE routes
+      SET route_long_name = route_short_name
+      WHERE route_long_name is null;
+    `)
+    const rows = res.rowsAffected[0]
+    log(
+      `${config.prefix} ${config.version}`.magenta,
+      `Updated ${rows} null route codes`
     )
   }
 
