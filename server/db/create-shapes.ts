@@ -1,5 +1,11 @@
-import fs from 'fs'
-import path from 'path'
+import {
+  createReadStream,
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  readdir,
+} from 'fs'
+import { resolve as _resolve } from 'path'
 import csvparse from 'csv-parse'
 import transform from 'stream-transform'
 import * as colors from 'colors'
@@ -19,7 +25,7 @@ class CreateShapes {
 
   create(inputFile: string, outputDirectory: string, versions: string[]) {
     return new Promise((resolve, reject) => {
-      const input = fs.createReadStream(inputFile)
+      const input = createReadStream(inputFile)
       const parser = csvparse({ delimiter: ',' })
 
       const output: {
@@ -27,7 +33,8 @@ class CreateShapes {
       } = {}
       let headers: { [key: string]: number } = null
       let total = 0
-      const transformer = transform((row, callback) => {
+
+      const handler: transform.Handler = (row, callback) => {
         // builds the csv headers for easy access later
         if (headers === null) {
           headers = {}
@@ -54,7 +61,8 @@ class CreateShapes {
         }
 
         return callback(null)
-      })
+      }
+      const transformer = transform(handler)
         .on('finish', () => {
           log('Created Shapes. Writing to disk...')
           Object.keys(output).forEach(key => {
@@ -65,12 +73,12 @@ class CreateShapes {
                 subfolder = version
               }
             })
-            const dir = path.resolve(outputDirectory, subfolder)
-            if (!fs.existsSync(dir)) {
-              fs.mkdirSync(dir)
+            const dir = _resolve(outputDirectory, subfolder)
+            if (!existsSync(dir)) {
+              mkdirSync(dir)
             }
-            fs.writeFileSync(
-              path.resolve(dir, `${Buffer.from(key).toString('base64')}.json`),
+            writeFileSync(
+              _resolve(dir, `${Buffer.from(key).toString('base64')}.json`),
               JSON.stringify(output[key])
             )
           })
@@ -105,7 +113,7 @@ class CreateShapes {
           .slice(-1)[0]
           .replace('_', '-')
           .replace('.', '-')}/${fileName}`
-        const fileLocation = path.resolve(directory, fileName)
+        const fileLocation = _resolve(directory, fileName)
         this.storageSvc.uploadFile(
           container,
           key,
@@ -128,7 +136,7 @@ class CreateShapes {
         return true
       }
 
-      fs.readdir(directory, (err, files) => {
+      readdir(directory, (err, files) => {
         if (err) {
           console.error(err)
         }

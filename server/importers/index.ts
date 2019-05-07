@@ -1,8 +1,6 @@
-import fs from 'fs'
-import path from 'path'
-import rimraf from 'rimraf'
-import sql from 'mssql'
-
+import { join } from 'path'
+import { VarChar } from 'mssql'
+import { red } from 'colors'
 import log from '../logger.js'
 import GtfsImport from '../db/gtfs-import.js'
 import connection from '../db/connection.js'
@@ -66,9 +64,9 @@ class Importer {
       this.current = new Region()
     } catch (err) {
       log(
-        'fatal error'.red,
+        red('fatal error'),
         'Could not find an importer in ',
-        path.join(__dirname, './regions', `${config.prefix}.js`)
+        join(__dirname, './regions', `${config.prefix}.js`)
       )
     }
   }
@@ -182,7 +180,7 @@ class Importer {
     const {
       db: { database },
     } = config
-    sqlRequest.input('dbName', sql.VarChar, database)
+    sqlRequest.input('dbName', VarChar, database)
     try {
       await sqlRequest.query(
         `

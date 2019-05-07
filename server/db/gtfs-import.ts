@@ -1,10 +1,8 @@
-import { Table, VarChar, Decimal, Int, Time, Bit, Date as _Date } from 'mssql'
-import extract from 'extract-zip'
+import { Table, VarChar, Bit, Int, Date as _Date, Time, Decimal } from 'mssql'
 import csvparse from 'csv-parse'
 import transform from 'stream-transform'
 import { createReadStream } from 'fs'
 import { resolve as _resolve } from 'path'
-import { promisify } from 'util'
 import connection from './connection'
 import log from '../logger'
 import config from '../config'
@@ -288,63 +286,65 @@ class GtfsImport {
       let transactions = 0
       let totalTransactions = 0
 
-      const transformer = transform(async (row, callback) => {
-        // builds the csv headers for easy access later
-        if (headers === null) {
-          headers = {}
-          row.forEach((item, index) => {
-            headers[item] = index
-          })
-          return callback(null)
-        }
+      const transformer = transform(
+        async (row, callback) => {
+          // builds the csv headers for easy access later
+          if (headers === null) {
+            headers = {}
+            row.forEach((item, index) => {
+              headers[item] = index
+            })
+            return callback(null)
+          }
 
-        const processRow = async () => {
-          if (row && row.length > 1) {
-            const tableSchema = schemas[file.table]
-            if (tableSchema) {
-              const record = this._mapRowToRecord(row, headers, tableSchema)
+          const processRow = async () => {
+            if (row && row.length > 1) {
+              const tableSchema = schemas[file.table]
+              if (tableSchema) {
+                const record = this._mapRowToRecord(row, headers, tableSchema)
 
-              // check if the row is versioned, and whether to upload it
-              if (containsVersion && record.join(',').match(version) === null) {
-                return
+                // check if the row is versioned, and whether to upload it
+                if (
+                  containsVersion &&
+                  record.join(',').match(version) === null
+                ) {
+                  return
+                }
+
+                table.rows.add(...record)
+
+                transactions += 1
+                totalTransactions += 1
               }
-
-              table.rows.add(...record)
-
-              transactions += 1
-              totalTransactions += 1
             }
           }
-        }
 
-        // assembles our CSV into JSON
-        if (transactions < config.db.transactionLimit) {
-          processRow()
-          callback(null)
-        } else {
-          if (totalTransactions > 1000000) {
-            log(endpoint, logstr, `${totalTransactions / 1000000}m Rows`)
-          } else {
-            log(endpoint, logstr, `${totalTransactions / 1000}k Rows`)
-          }
-          try {
-            await this.commit(table)
-            log(endpoint, logstr, 'Transaction Committed.')
-            transactions = 0
-            // await this.mergeToFinal(config.table, hashName)
-            // log(endpoint, logstr, 'Merge Committed.')
-            table = this.getTable(file.table)
+          // assembles our CSV into JSON
+          if (transactions < config.db.transactionLimit) {
             processRow()
             callback(null)
-          } catch (err) {
-            console.log(err)
+          } else {
+            log(endpoint, logstr, `${totalTransactions / 1000}k Rows`)
+            try {
+              await this.commit(table)
+              log(endpoint, logstr, 'Transaction Committed.')
+              transactions = 0
+              // await this.mergeToFinal(config.table, hashName)
+              // log(endpoint, logstr, 'Merge Committed.')
+              table = this.getTable(file.table)
+              processRow()
+              callback(null)
+            } catch (err) {
+              console.log(err)
+            }
           }
-        }
-      })
+        },
+        { parallel: 1 }
+      )
       transformer.on('finish', async () => {
         const transactionsStr =
           totalTransactions > 1000
-            ? `${Math.round(totalTransactions / 1000)}l`
+            ? `${Math.round(totalTransactions / 1000)}k`
             : `${totalTransactions}`
 
         log(endpoint, logstr, transactionsStr, 'Rows')
@@ -393,62 +393,67 @@ class GtfsImport {
       input.on('error', reject)
       const parser = csvparse({ delimiter: ',' })
       let headers: { [key: string]: number } = null
-
       let transactions = 0
       let totalTransactions = 0
 
-      const transformer = transform(async (row, callback) => {
-        // builds the csv headers for easy access later
-        if (headers === null) {
-          headers = {}
-          row.forEach((item, index) => {
-            headers[item] = index
-          })
-          return callback(null)
-        }
+      const transformer = transform(
+        async (row, callback) => {
+          // builds the csv headers for easy access later
+          if (headers === null) {
+            headers = {}
+            row.forEach((item, index) => {
+              headers[item] = index
+            })
+            return callback(null)
+          }
 
-        const processRow = async () => {
-          if (row && row.length > 1) {
-            const tableSchema = schemas[file.table]
-            if (tableSchema) {
-              const record = this._mapRowToRecord(row, headers, tableSchema)
+          const processRow = async () => {
+            if (row && row.length > 1) {
+              const tableSchema = schemas[file.table]
+              if (tableSchema) {
+                const record = this._mapRowToRecord(row, headers, tableSchema)
 
-              // check if the row is versioned, and whether to upload it
-              if (containsVersion && record.join(',').match(version) === null) {
-                return
+                // check if the row is versioned, and whether to upload it
+                if (
+                  containsVersion &&
+                  record.join(',').match(version) === null
+                ) {
+                  return
+                }
+
+                table.rows.add(...record)
+
+                transactions += 1
+                totalTransactions += 1
               }
-
-              table.rows.add(...record)
-
-              transactions += 1
-              totalTransactions += 1
             }
           }
-        }
 
-        // assembles our CSV into JSON
-        if (transactions < config.db.transactionLimit) {
-          processRow()
-          callback(null)
-        } else {
-          log(endpoint, logstr, `${totalTransactions / 1000}k Rows`)
-          try {
-            await this.commit(table)
-            log(endpoint, logstr, 'Transaction Committed.')
-            transactions = 0
-
-            table = this.getTable(file.table)
+          // assembles our CSV into JSON
+          if (transactions < config.db.transactionLimit) {
             processRow()
             callback(null)
-          } catch (err) {
-            console.log(err)
+          } else {
+            log(endpoint, logstr, `${totalTransactions / 1000}k Rows`)
+            try {
+              await this.commit(table)
+              log(endpoint, logstr, 'Transaction Committed.')
+              transactions = 0
+
+              table = this.getTable(file.table)
+              processRow()
+              callback(null)
+            } catch (err) {
+              console.log(err)
+            }
           }
-        }
-      })
+        },
+        { parallel: 1 }
+      )
       transformer.on('finish', async () => {
         const transactionsStr =
           totalTransactions > 1000
-            ? `${Math.round(totalTransactions / 1000)}l`
+            ? `${Math.round(totalTransactions / 1000)}k`
             : `${totalTransactions}`
         log(endpoint, logstr, transactionsStr, 'Rows')
         try {
