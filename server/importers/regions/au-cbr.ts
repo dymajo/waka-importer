@@ -1,6 +1,6 @@
 import MultiImporter from '../MultiImporter'
 
-class TCImporter extends MultiImporter {
+class CanberraImporter extends MultiImporter {
   constructor() {
     super({
       locations: [
@@ -21,4 +21,4 @@ class TCImporter extends MultiImporter {
   }
 }
 
-export default TCImporter
+export default CanberraImporter

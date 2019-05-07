@@ -1,9 +1,9 @@
 import connection from '../../db/connection'
 import log from '../../logger'
 import config from '../../config'
-import BaseImporter from '../BaseImporter'
+import SingleImporter from '../SingleImporter'
 
-class MetlinkImporter extends BaseImporter {
+class WellingtonImporter extends SingleImporter {
   constructor() {
     super({
       zipname: 'metlink',
@@ -27,4 +27,4 @@ class MetlinkImporter extends BaseImporter {
   }
 }
 
-export default MetlinkImporter
+export default WellingtonImporter

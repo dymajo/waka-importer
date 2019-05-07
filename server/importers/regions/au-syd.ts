@@ -190,7 +190,7 @@ const locations = [
   },
 ]
 
-class TfNSWImporter extends MultiImporter {
+class SydneyImporter extends MultiImporter {
   constructor() {
     super({
       locations,
@@ -201,4 +201,4 @@ class TfNSWImporter extends MultiImporter {
   }
 }
 
-export default TfNSWImporter
+export default SydneyImporter

@@ -8,30 +8,30 @@ import Storage from '../db/storage.js'
 import KeyvalueDynamo from '../db/keyvalue-dynamo.js'
 import config from '../config'
 
-import ATImporter from './regions/nz-akl'
+import AucklandImporter from './regions/nz-akl'
 import ChchImporter from './regions/nz-chc'
 import OtagoImporter from './regions/nz-otg'
-import TCImporter from './regions/au-cbr'
-import TfNSWImporter from './regions/au-syd'
-import MetlinkImporter from './regions/nz-wlg'
-import PTVImporter from './regions/au-mel'
-import RATPImporter from './regions/fr-par'
+import CanberraImporter from './regions/au-cbr'
+import SyndeyImporter from './regions/au-syd'
+import WellingtonImporter from './regions/nz-wlg'
+import MelbourneImporter from './regions/au-mel'
+import ParisImporter from './regions/fr-par'
 import SEQImporter from './regions/au-seq'
-import SBBCFFFFSImporter from './regions/ch-sfr'
+import SFRImporter from './regions/ch-sfr'
 import BaseImporter from './BaseImporter.js'
 import MultiImporter from './MultiImporter.js'
 
 const regions = {
-  'nz-akl': ATImporter,
+  'nz-akl': AucklandImporter,
   'nz-chc': ChchImporter,
   'nz-otg': OtagoImporter,
-  'nz-wlg': MetlinkImporter,
+  'nz-wlg': WellingtonImporter,
   'au-seq': SEQImporter,
-  'au-mel': PTVImporter,
-  'fr-par': RATPImporter,
-  'ch-sfr': SBBCFFFFSImporter,
-  'au-syd': TfNSWImporter,
-  'au-cbr': TCImporter,
+  'au-mel': MelbourneImporter,
+  'fr-par': ParisImporter,
+  'ch-sfr': SFRImporter,
+  'au-syd': SyndeyImporter,
+  'au-cbr': CanberraImporter,
 }
 
 interface IImporterProps {

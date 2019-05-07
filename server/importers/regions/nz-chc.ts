@@ -1,6 +1,6 @@
-import BaseImporter from '../BaseImporter'
+import SingleImporter from '../SingleImporter'
 
-class ChchImporter extends BaseImporter {
+class ChchImporter extends SingleImporter {
   constructor() {
     super({
       zipname: 'metro-christchurch',

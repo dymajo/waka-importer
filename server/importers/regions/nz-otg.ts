@@ -1,6 +1,6 @@
-import BaseImporter from '../BaseImporter'
+import SingleImporter from '../SingleImporter'
 
-class OtagoImporter extends BaseImporter {
+class OtagoImporter extends SingleImporter {
   constructor() {
     super({
       zipname: 'otago',

@@ -1,6 +1,6 @@
-import BaseImporter from '../BaseImporter'
+import SingleImporter from '../SingleImporter'
 
-class ATImporter extends BaseImporter {
+class AucklandImporter extends SingleImporter {
   constructor() {
     super({
       zipname: 'at',
@@ -15,4 +15,4 @@ class ATImporter extends BaseImporter {
   }
 }
 
-export default ATImporter
+export default AucklandImporter

@@ -12,8 +12,8 @@ import connection from '../db/connection.js'
 import Storage from '../db/storage.js'
 import KeyvalueDynamo from '../db/keyvalue-dynamo.js'
 import config from '../config'
+import BaseImporter from './BaseImporter.js';
 
-const shapeFile = 'shapes.txt'
 
 interface IMultiImporterProps {
   keyvalue?: string
@@ -25,8 +25,7 @@ interface IMultiImporterProps {
   authorization?: string
 }
 
-abstract class MultiImporter {
-  postImport?(): void
+abstract class MultiImporter extends BaseImporter {
 
   locations: any
   authorization: any
@@ -36,19 +35,9 @@ abstract class MultiImporter {
   batchSize: any
   versions: any
   zipLocations: any[]
-  files: {
-    name: string
-    table:
-      | 'agency'
-      | 'stops'
-      | 'routes'
-      | 'trips'
-      | 'stop_times'
-      | 'calendar'
-      | 'calendar_dates'
-    versioned: boolean
-  }[]
+
   constructor(props: IMultiImporterProps) {
+    super()
     const {
       keyvalue,
       keyvalueVersionTable,
@@ -67,43 +56,7 @@ abstract class MultiImporter {
     this.batchSize = batchSize || 2
     this.versions = null
     this.zipLocations = []
-    this.files = [
-      {
-        name: 'agency.txt',
-        table: 'agency',
-        versioned: false,
-      },
-      {
-        name: 'stops.txt',
-        table: 'stops',
-        versioned: false,
-      },
-      {
-        name: 'routes.txt',
-        table: 'routes',
-        versioned: false,
-      },
-      {
-        name: 'trips.txt',
-        table: 'trips',
-        versioned: false,
-      },
-      {
-        name: 'stop_times.txt',
-        table: 'stop_times',
-        versioned: false,
-      },
-      {
-        name: 'calendar.txt',
-        table: 'calendar',
-        versioned: false,
-      },
-      {
-        name: 'calendar_dates.txt',
-        table: 'calendar_dates',
-        versioned: false,
-      },
-    ]
+
     if (keyvalue === 'dynamo') {
       this.versions = new KeyvalueDynamo({
         name: keyvalueVersionTable,
