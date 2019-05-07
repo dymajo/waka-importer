@@ -1,11 +1,10 @@
-import fs from 'fs'
-import path from 'path'
-import rimraf from 'rimraf'
+import { existsSync, createWriteStream, mkdirSync, writeFileSync } from 'fs'
+import { resolve as _resolve, join } from 'path'
+import * as rimraf from 'rimraf'
 import axios from 'axios'
-import extract from 'extract-zip'
-import util from 'util'
-
-import colors from 'colors'
+import * as extract from 'extract-zip'
+import { promisify } from 'util'
+import { red } from 'colors'
 import log from '../logger.js'
 import GtfsImport from '../db/gtfs-import.js'
 import CreateShapes from '../db/create-shapes.js'
@@ -113,35 +112,21 @@ abstract class MultiImporter {
     }
   }
 
-  async start(created = false) {
-    if (!created) {
-      await this.download()
-      console.log(this.zipLocations)
-      await this.unzip()
-      await this.db()
-    } else {
-      console.warn('DB already created - skipping download & unzip.')
-    }
-    await this.shapes()
-    await this.fixStopCodes()
-    await this.fixRoutes()
-  }
-
   async get(location: { endpoint: string; type: string; name: string }) {
     const { endpoint, type, name } = location
     const { authorization } = this
     const zipLocation = {
-      p: path.join(__dirname, `../../cache/${name}.zip`),
+      p: join(__dirname, `../../cache/${name}.zip`),
       type,
       endpoint,
     }
-    console.log(zipLocation)
     log(config.prefix.magenta, 'Downloading GTFS Data', name)
     try {
       const res = await axios.get(endpoint, {
         headers: { Authorization: authorization },
+        responseType: 'stream',
       })
-      const dest = fs.createWriteStream(zipLocation.p)
+      const dest = createWriteStream(zipLocation.p)
       res.data.pipe(dest)
       log(config.prefix.magenta, 'Finished Downloading GTFS Data', name)
       this.zipLocations.push(zipLocation)
@@ -169,11 +154,11 @@ abstract class MultiImporter {
   async unzip() {
     const promises = []
     for (const { p } of this.zipLocations) {
-      const extractor = util.promisify(extract)
+      const extractor = promisify(extract.default)
 
       promises.push(
         extractor(p, {
-          dir: path.resolve(`${p}unarchived`),
+          dir: _resolve(`${p}unarchived`),
         })
       )
     }
@@ -207,27 +192,27 @@ abstract class MultiImporter {
   async shapes() {
     const { zipLocations } = this
     for (const { p } of zipLocations) {
-      if (!fs.existsSync(p)) {
+      if (!existsSync(p)) {
         console.warn('Shapes could not be found!')
         return
       }
       const creator = new CreateShapes()
-      const inputDir = path.resolve(`${p}unarchived`, 'shapes.txt')
-      const outputDir = path.resolve(`${p}unarchived`, 'shapes')
-      const outputDir2 = path.resolve(outputDir, config.version)
+      const inputDir = _resolve(`${p}unarchived`, 'shapes.txt')
+      const outputDir = _resolve(`${p}unarchived`, 'shapes')
+      const outputDir2 = _resolve(outputDir, config.version)
 
       // make sure the old output dir exists
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir)
+      if (!existsSync(outputDir)) {
+        mkdirSync(outputDir)
       }
 
       // cleans up old import if exists
-      if (fs.existsSync(outputDir2)) {
+      if (existsSync(outputDir2)) {
         await new Promise((resolve, reject) => {
           rimraf(outputDir2, resolve)
         })
       }
-      fs.mkdirSync(outputDir2)
+      mkdirSync(outputDir2)
 
       // creates the new datas
       await creator.create(inputDir, outputDir, [config.version])
@@ -237,7 +222,7 @@ abstract class MultiImporter {
         .replace('_', '-')
       await creator.upload(
         config.shapesContainer,
-        path.resolve(outputDir, config.version)
+        _resolve(outputDir, config.version)
       )
     }
   }
