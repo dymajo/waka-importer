@@ -27,7 +27,7 @@ interface IMultiImporterProps {
 }
 
 abstract class MultiImporter {
-  async postImport?(): Promise<void>
+  postImport?(): void
 
   locations: any
   authorization: any

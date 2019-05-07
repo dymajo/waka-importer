@@ -17,7 +17,7 @@ interface IBaseImporterProps {
 }
 
 abstract class BaseImporter {
-  async postImport?(): Promise<void>
+  postImport?(): void
   zipname: string
   url: string
   files: {
