@@ -33,9 +33,9 @@ const start = async () => {
 
   log('Connected to Database')
   const sqlRequest = connection.get().request()
-  const databaseCreated = await sqlRequest.query(
+  const databaseCreated = await sqlRequest.query<{ dbcreated: number }>(
     `
-      select OBJECT_ID('agency', 'U') as 'dbcreated'
+    select OBJECT_ID('agency', 'U') as 'dbcreated'
     `
   )
   const created = !(databaseCreated.recordset[0].dbcreated === null)
