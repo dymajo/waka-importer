@@ -1,15 +1,7 @@
 import 'dotenv/config'
 
 interface IWakaConfig {
-  prefix:
-    | 'au-syd'
-    | 'au-cbr'
-    | 'au-seq'
-    | 'ch-sfr'
-    | 'nz-akl'
-    | 'nz-chc'
-    | 'nz-otg'
-    | 'nz-wlg'
+  prefix: string
   version: string
   mode: 'all' | 'db' | 'shapes' | 'unzip' | 'download' | 'export'
   storageService: 'aws' | 'azure'
@@ -35,17 +27,9 @@ interface IWakaConfig {
   [key: string]: string | undefined | boolean | number | object
 }
 
-declare var process: {
+declare const process: {
   env: {
-    PREFIX:
-      | 'au-syd'
-      | 'au-cbr'
-      | 'au-seq'
-      | 'ch-sfr'
-      | 'nz-akl'
-      | 'nz-chc'
-      | 'nz-otg'
-      | 'nz-wlg'
+    PREFIX: string
     MODE?: 'all' | 'db' | 'shapes' | 'unzip' | 'download' | 'export'
     VERSION: string
     KEYVALUE?: 'dynamo'
