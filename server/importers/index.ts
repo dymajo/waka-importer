@@ -1,16 +1,14 @@
-import { existsSync, mkdirSync } from 'fs'
-import { join, resolve as _resolve } from 'path'
-import * as rimraf from 'rimraf'
-import { VarChar } from 'mssql'
+import fs from 'fs'
+import path from 'path'
+import rimraf from 'rimraf'
+import sql from 'mssql'
 
-import log from '../logger'
-import GtfsImport from '../db/gtfs-import'
-import CreateShapes from '../db/create-shapes'
-import connection from '../db/connection'
-import Storage from '../db/storage'
-import KeyvalueDynamo from '../db/keyvalue-dynamo'
+import log from '../logger.js'
+import GtfsImport from '../db/gtfs-import.js'
+import connection from '../db/connection.js'
+import Storage from '../db/storage.js'
+import KeyvalueDynamo from '../db/keyvalue-dynamo.js'
 import config from '../config'
-import BaseImporter from './regions/BaseImporter'
 
 import ATImporter from './regions/nz-akl'
 import ChchImporter from './regions/nz-chc'
@@ -22,6 +20,8 @@ import PTVImporter from './regions/au-mel'
 import RATPImporter from './regions/fr-par'
 import SEQImporter from './regions/au-seq'
 import SBBCFFFFSImporter from './regions/ch-sfr'
+import BaseImporter from './BaseImporter.js'
+import MultiImporter from './MultiImporter.js'
 
 const regions = {
   'nz-akl': ATImporter,
@@ -36,21 +36,22 @@ const regions = {
   'au-cbr': TCImporter,
 }
 
-class Importer {
-  public importer: GtfsImport
-  public storage: Storage
-  public versions: KeyvalueDynamo | null
-  public current: BaseImporter | null
+interface IImporterProps {
+  keyvalue?: 'dynamo'
+  keyvalueVersionTable?: string
+  keyvalueRegion?: string
+}
 
-  constructor(props: {
-    keyvalue: string
-    keyvalueVersionTable: string
-    keyvalueRegion: string
-  }) {
+class Importer {
+  importer: GtfsImport
+  storage: Storage
+  versions?: KeyvalueDynamo
+  current: BaseImporter | MultiImporter
+  constructor(props: IImporterProps) {
+    const { keyvalue, keyvalueVersionTable, keyvalueRegion } = props
     this.importer = new GtfsImport()
     this.storage = new Storage({})
 
-    const { keyvalue, keyvalueVersionTable, keyvalueRegion } = props
     this.versions = null
     if (keyvalue === 'dynamo') {
       this.versions = new KeyvalueDynamo({
@@ -61,12 +62,13 @@ class Importer {
 
     this.current = null
     try {
-      this.current = require(`./regions/${config.prefix}`)
+      const Region = regions[config.prefix]
+      this.current = new Region()
     } catch (err) {
       log(
         'fatal error'.red,
         'Could not find an importer in ',
-        join(__dirname, './regions', `${config.prefix}`)
+        path.join(__dirname, './regions', `${config.prefix}.js`)
       )
     }
   }
@@ -125,7 +127,7 @@ class Importer {
   }
 
   async unzip() {
-    await this.importer.unzip(this.current.zipLocation)
+    await this.current.unzip()
   }
 
   async download() {
@@ -133,61 +135,16 @@ class Importer {
   }
 
   async db() {
-    for (const file of this.current.files) {
-      await this.importer.upload(
-        `${this.current.zipLocation}unarchived`,
-        file,
-        config.version,
-        file.versioned
-      )
-    }
+    await this.current.db(this.importer)
   }
 
   async shapes() {
-    if (!existsSync(this.current.zipLocation)) {
-      console.warn('Shapes could not be found!')
-      return
-    }
-
-    const creator = new CreateShapes()
-    const inputDir = _resolve(
-      `${this.current.zipLocation}unarchived`,
-      'shapes.txt'
-    )
-    const outputDir = _resolve(
-      `${this.current.zipLocation}unarchived`,
-      'shapes'
-    )
-    const outputDir2 = _resolve(outputDir, config.version)
-
-    // make sure the old output dir exists
-    if (!existsSync(outputDir)) {
-      mkdirSync(outputDir)
-    }
-
-    // cleans up old import if exists
-    if (existsSync(outputDir2)) {
-      await new Promise((resolve, reject) => {
-        rimraf(outputDir2, resolve)
-      })
-    }
-    mkdirSync(outputDir2)
-
-    // creates the new datas
-    await creator.create(inputDir, outputDir, [config.version])
-
-    const containerName = `${config.prefix}-${config.version}`
-      .replace('.', '-')
-      .replace('_', '-')
-    await creator.upload(
-      config.shapesContainer,
-      _resolve(outputDir, config.version)
-    )
+    this.current.shapes()
   }
 
   async fixStopCodes() {
     // GTFS says it's optional, but Waka uses stop_code for stop lookups
-    const sqlRequest = await connection.get().request()
+    const sqlRequest = connection.get().request()
     const res = await sqlRequest.query(`
       UPDATE stops
       SET stop_code = stop_id
@@ -221,11 +178,11 @@ class Importer {
   }
 
   async exportDb() {
-    const sqlRequest = await connection.get().request()
+    const sqlRequest = connection.get().request()
     const {
       db: { database },
     } = config
-    sqlRequest.input('dbName', VarChar, database)
+    sqlRequest.input('dbName', sql.VarChar, database)
     try {
       await sqlRequest.query(
         `

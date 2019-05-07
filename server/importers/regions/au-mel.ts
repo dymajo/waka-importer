@@ -9,4 +9,4 @@ class PTVImporter extends BaseImporter {
   }
 }
 
-module.exports = PTVImporter
+export default PTVImporter

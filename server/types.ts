@@ -1,17 +1,25 @@
 export interface IWakaConfig {
-  prefix: string
+  prefix:
+    | 'au-syd'
+    | 'au-cbr'
+    | 'au-seq'
+    | 'ch-sfr'
+    | 'nz-akl'
+    | 'nz-chc'
+    | 'nz-otg'
+    | 'nz-wlg'
   version: string
-  mode: string
-  storageService: string
+  mode: 'all' | 'db' | 'shapes' | 'unzip' | 'download' | 'export'
+  storageService: 'aws' | 'azure'
   shapesContainer: string
   shapesRegion: string
   shapesSkip: boolean
   emulatedStorage: boolean
   local?: boolean
-  keyValue?: string
+  keyValue?: 'dynamo'
   keyValueVersionTable?: string
   keyValueRegion?: string
-  tfnswApiKey: string
+  tfnswApiKey?: string
   db: {
     user: string
     password: string
@@ -22,4 +30,5 @@ export interface IWakaConfig {
     connectionTimeout: number
     requestTimeout: number
   }
+  [key: string]: string | undefined | boolean | number | object
 }

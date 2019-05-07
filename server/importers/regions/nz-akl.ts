@@ -1,4 +1,4 @@
-import BaseImporter from './BaseImporter'
+import BaseImporter from '../BaseImporter'
 
 class ATImporter extends BaseImporter {
   constructor() {

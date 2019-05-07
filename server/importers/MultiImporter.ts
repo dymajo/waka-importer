@@ -1,12 +1,11 @@
-import * as fs from 'fs'
-import * as path from 'path'
-import * as rimraf from 'rimraf'
-import * as sql from 'mssql'
-import fetch from 'node-fetch'
+import fs from 'fs'
+import path from 'path'
+import rimraf from 'rimraf'
+import axios from 'axios'
 import extract from 'extract-zip'
-import * as util from 'util'
+import util from 'util'
 
-import * as colors from 'colors'
+import colors from 'colors'
 import log from '../logger.js'
 import GtfsImport from '../db/gtfs-import.js'
 import CreateShapes from '../db/create-shapes.js'
@@ -15,46 +14,9 @@ import Storage from '../db/storage.js'
 import KeyvalueDynamo from '../db/keyvalue-dynamo.js'
 import config from '../config'
 
-const files = [
-  {
-    name: 'agency.txt',
-    table: 'agency',
-    versioned: false,
-  },
-  {
-    name: 'stops.txt',
-    table: 'stops',
-    versioned: false,
-  },
-  {
-    name: 'routes.txt',
-    table: 'routes',
-    versioned: false,
-  },
-  {
-    name: 'trips.txt',
-    table: 'trips',
-    versioned: false,
-  },
-  {
-    name: 'stop_times.txt',
-    table: 'stop_times',
-    versioned: false,
-  },
-  {
-    name: 'calendar.txt',
-    table: 'calendar',
-    versioned: false,
-  },
-  {
-    name: 'calendar_dates.txt',
-    table: 'calendar_dates',
-    versioned: false,
-  },
-]
 const shapeFile = 'shapes.txt'
 
-interface IMulitImporterProps {
+interface IMultiImporterProps {
   keyvalue?: string
   keyvalueVersionTable?: string
   keyvalueRegion?: string
@@ -64,16 +26,30 @@ interface IMulitImporterProps {
   authorization?: string
 }
 
-class MultiImporter {
-  locations?: { endpoint: string; type: string; name: string }[]
-  authorization?: string
-  importer: GtfsImport
+abstract class MultiImporter {
+  async postImport?(): Promise<void>
+
+  locations: any
+  authorization: any
+  importer: any
   storage: Storage
-  downloadInterval: number
-  batchSize: number
-  versions: KeyvalueDynamo
-  zipLocations: { p: string; type: string; endpoint: string }[]
-  constructor(props: IMulitImporterProps) {
+  downloadInterval: any
+  batchSize: any
+  versions: any
+  zipLocations: any[]
+  files: {
+    name: string
+    table:
+      | 'agency'
+      | 'stops'
+      | 'routes'
+      | 'trips'
+      | 'stop_times'
+      | 'calendar'
+      | 'calendar_dates'
+    versioned: boolean
+  }[]
+  constructor(props: IMultiImporterProps) {
     const {
       keyvalue,
       keyvalueVersionTable,
@@ -92,18 +68,49 @@ class MultiImporter {
     this.batchSize = batchSize || 2
     this.versions = null
     this.zipLocations = []
+    this.files = [
+      {
+        name: 'agency.txt',
+        table: 'agency',
+        versioned: false,
+      },
+      {
+        name: 'stops.txt',
+        table: 'stops',
+        versioned: false,
+      },
+      {
+        name: 'routes.txt',
+        table: 'routes',
+        versioned: false,
+      },
+      {
+        name: 'trips.txt',
+        table: 'trips',
+        versioned: false,
+      },
+      {
+        name: 'stop_times.txt',
+        table: 'stop_times',
+        versioned: false,
+      },
+      {
+        name: 'calendar.txt',
+        table: 'calendar',
+        versioned: false,
+      },
+      {
+        name: 'calendar_dates.txt',
+        table: 'calendar_dates',
+        versioned: false,
+      },
+    ]
     if (keyvalue === 'dynamo') {
       this.versions = new KeyvalueDynamo({
         name: keyvalueVersionTable,
         region: keyvalueRegion,
       })
     }
-    this.start = this.start.bind(this)
-    this.get = this.get.bind(this)
-    this.download = this.download.bind(this)
-    this.unzip = this.unzip.bind(this)
-    this.fixStopCodes = this.fixStopCodes.bind(this)
-    this.shapes = this.shapes.bind(this)
   }
 
   async start(created = false) {
@@ -120,7 +127,7 @@ class MultiImporter {
     await this.fixRoutes()
   }
 
-  async get(location) {
+  async get(location: { endpoint: string; type: string; name: string }) {
     const { endpoint, type, name } = location
     const { authorization } = this
     const zipLocation = {
@@ -131,43 +138,22 @@ class MultiImporter {
     console.log(zipLocation)
     log(config.prefix.magenta, 'Downloading GTFS Data', name)
     try {
-      const headers = authorization
-        ? {
-            headers: {
-              Authorization: authorization,
-            },
-          }
-        : null
-      const res = await fetch(endpoint, headers)
-      if (res.ok) {
-        await new Promise((resolve, reject) => {
-          const dest = fs.createWriteStream(zipLocation.p)
-          res.body.pipe(dest)
-          res.body.on('error', err => {
-            reject(err)
-          })
-          dest.on('error', err => {
-            console.log(err)
-            reject(err)
-          })
-          dest.on('finish', () => {
-            resolve()
-          })
-        })
-        log(config.prefix.magenta, 'Finished Downloading GTFS Data', name)
-        this.zipLocations.push(zipLocation)
-        return
-      }
-      console.log(res)
-      throw Error(res.statusText)
+      const res = await axios.get(endpoint, {
+        headers: { Authorization: authorization },
+      })
+      const dest = fs.createWriteStream(zipLocation.p)
+      res.data.pipe(dest)
+      log(config.prefix.magenta, 'Finished Downloading GTFS Data', name)
+      this.zipLocations.push(zipLocation)
+      return
     } catch (err) {
-      console.log(err)
+      console.error(err)
     }
   }
 
   async download() {
     const { downloadInterval, locations, batchSize } = this
-    function timeout(ms) {
+    function timeout(ms: number) {
       return new Promise(resolve => setTimeout(resolve, ms))
     }
     console.log(batchSize, downloadInterval)
@@ -181,7 +167,6 @@ class MultiImporter {
   }
 
   async unzip() {
-    console.log('here this is ')
     const promises = []
     for (const { p } of this.zipLocations) {
       const extractor = util.promisify(extract)
@@ -200,7 +185,7 @@ class MultiImporter {
   }
 
   async db() {
-    const { zipLocations } = this
+    const { zipLocations, files } = this
     for (const { p, type, endpoint } of zipLocations) {
       for (const file of files) {
         try {

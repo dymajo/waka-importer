@@ -10,4 +10,4 @@ class SBBCFFFFSImporter extends BaseImporter {
   }
 }
 
-module.exports = SBBCFFFFSImporter
+export default SBBCFFFFSImporter

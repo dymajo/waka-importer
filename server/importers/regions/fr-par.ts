@@ -9,4 +9,4 @@ class RATPImporter extends BaseImporter {
   }
 }
 
-module.exports = RATPImporter
+export default RATPImporter

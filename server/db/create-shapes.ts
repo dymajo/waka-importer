@@ -1,12 +1,6 @@
-import {
-  createReadStream,
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-  readdir,
-} from 'fs'
-import { resolve as _resolve } from 'path'
-import * as csvparse from 'csv-parse'
+import fs from 'fs'
+import path from 'path'
+import csvparse from 'csv-parse'
 import transform from 'stream-transform'
 import * as colors from 'colors'
 import log from '../logger'
@@ -23,13 +17,15 @@ class CreateShapes {
     })
   }
 
-  create(inputFile, outputDirectory, versions) {
+  create(inputFile: string, outputDirectory: string, versions: string[]) {
     return new Promise((resolve, reject) => {
-      const input = createReadStream(inputFile)
+      const input = fs.createReadStream(inputFile)
       const parser = csvparse({ delimiter: ',' })
 
-      const output = {}
-      let headers = null
+      const output: {
+        [shape_id: string]: { type: string; coordinates: number[][] }
+      } = {}
+      let headers: { [key: string]: number } = null
       let total = 0
       const transformer = transform((row, callback) => {
         // builds the csv headers for easy access later
@@ -69,12 +65,12 @@ class CreateShapes {
                 subfolder = version
               }
             })
-            const dir = _resolve(outputDirectory, subfolder)
-            if (!existsSync(dir)) {
-              mkdirSync(dir)
+            const dir = path.resolve(outputDirectory, subfolder)
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir)
             }
-            writeFileSync(
-              _resolve(dir, `${Buffer.from(key).toString('base64')}.json`),
+            fs.writeFileSync(
+              path.resolve(dir, `${Buffer.from(key).toString('base64')}.json`),
               JSON.stringify(output[key])
             )
           })
@@ -97,7 +93,7 @@ class CreateShapes {
         return resolve()
       }
       let total = 0
-      const uploadSingle = (files, index, callback) => {
+      const uploadSingle = (files: string[], index: number, callback: any) => {
         if (index === files.length) {
           log(`${container.magenta}:`, 'Upload Complete!', total, 'Shapes.')
           return resolve()
@@ -109,25 +105,30 @@ class CreateShapes {
           .slice(-1)[0]
           .replace('_', '-')
           .replace('.', '-')}/${fileName}`
-        const fileLocation = _resolve(directory, fileName)
-        this.storageSvc.uploadFile(container, key, fileLocation, error => {
-          if (error) {
-            console.error(
-              `${container.magenta}:`,
-              'Could not upload shape.',
-              error
-            )
+        const fileLocation = path.resolve(directory, fileName)
+        this.storageSvc.uploadFile(
+          container,
+          key,
+          fileLocation,
+          (error: any) => {
+            if (error) {
+              console.error(
+                `${container.magenta}:`,
+                'Could not upload shape.',
+                error
+              )
+            }
+            total += 1
+            if (total % 100 === 0) {
+              log(`${container.magenta}:`, 'Uploaded', total, 'Shapes.')
+            }
+            callback(files, index + 1, callback)
           }
-          total += 1
-          if (total % 100 === 0) {
-            log(`${container.magenta}:`, 'Uploaded', total, 'Shapes.')
-          }
-          callback(files, index + 1, callback)
-        })
+        )
         return true
       }
 
-      readdir(directory, (err, files) => {
+      fs.readdir(directory, (err, files) => {
         if (err) {
           console.error(err)
         }

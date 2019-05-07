@@ -1,5 +1,38 @@
 import { IWakaConfig } from './types'
 
+declare var process: {
+  env: {
+    PREFIX:
+      | 'au-syd'
+      | 'au-cbr'
+      | 'au-seq'
+      | 'ch-sfr'
+      | 'nz-akl'
+      | 'nz-chc'
+      | 'nz-otg'
+      | 'nz-wlg'
+    MODE?: 'all' | 'db' | 'shapes' | 'unzip' | 'download' | 'export'
+    VERSION: string
+    KEYVALUE?: 'dynamo'
+    KEYVALUE_VERSION_TABLE?: string
+    KEYVALUE_REGION?: string
+    DB_DATABASE: string
+    DB_USER: string
+    DB_PASSWORD: string
+    DB_SERVER: string
+    DB_MASTER_DATABASE?: string
+    DB_TRANSACTION_LIMIT?: string
+    DB_CONNECTION_TIMEOUT?: string
+    DB_REQUEST_TIMEOUT?: string
+    STORAGE_SERVICE?: 'aws' | 'azure'
+    SHAPES_CONTAINER?: string
+    SHAPES_REGION?: string
+    SHAPES_SKIP?: string
+    EMULATED_STORAGE?: string
+    TFNSW_API_KEY?: string
+  }
+}
+
 const {
   PREFIX,
   VERSION,
@@ -43,9 +76,15 @@ const config: IWakaConfig = {
     server: DB_SERVER,
     database: DB_DATABASE || `${PREFIX}_${VERSION}`,
     master_database: DB_MASTER_DATABASE || 'master',
-    transactionLimit: parseInt(DB_TRANSACTION_LIMIT, 10) || 50000,
-    connectionTimeout: parseInt(DB_CONNECTION_TIMEOUT, 10) || 60000,
-    requestTimeout: parseInt(DB_REQUEST_TIMEOUT, 10) || 60000,
+    transactionLimit: DB_TRANSACTION_LIMIT
+      ? parseInt(DB_TRANSACTION_LIMIT, 10)
+      : 50000,
+    connectionTimeout: DB_CONNECTION_TIMEOUT
+      ? parseInt(DB_CONNECTION_TIMEOUT, 10)
+      : 60000,
+    requestTimeout: DB_REQUEST_TIMEOUT
+      ? parseInt(DB_REQUEST_TIMEOUT, 10)
+      : 60000,
   },
 }
 

@@ -8,6 +8,7 @@ import config from './config'
 
 log('Importer Started')
 
+const sydney = config.prefix === 'au-syd'
 Object.keys(config).forEach(key => {
   if (config.tfnswApiKey === undefined && sydney) {
     throw new Error('no api key for sydney')

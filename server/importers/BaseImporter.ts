@@ -1,26 +1,40 @@
-import * as path from 'path'
-import * as request from 'request'
-import * as fs from 'fs'
-import * as colors from 'colors'
+import path from 'path'
+import request from 'request'
+import fs from 'fs'
+import colors from 'colors'
 import extract from 'extract-zip'
-import * as util from 'util'
-import * as rimraf from 'rimraf'
+import util from 'util'
+import rimraf from 'rimraf'
 import config from '../config'
 import log from '../logger.js'
 import CreateShapes from '../db/create-shapes.js'
+import Importer from '.'
+import GtfsImport from '../db/gtfs-import'
 
 interface IBaseImporterProps {
   zipname: string
   url: string
 }
 
-class BaseImporter {
+abstract class BaseImporter {
+  async postImport?(): Promise<void>
   zipname: string
   url: string
-  files: { name: string; table: string; versioned: boolean }[]
+  files: {
+    name: string
+    table:
+      | 'agency'
+      | 'stops'
+      | 'routes'
+      | 'trips'
+      | 'stop_times'
+      | 'calendar'
+      | 'calendar_dates'
+    versioned: boolean
+  }[]
   shapeFile: string
   zipLocation: string
-  downloadOptions: { url: string }
+  downloadOptions: { url: any }
   constructor(props: IBaseImporterProps) {
     const { zipname, url } = props
     this.zipname = zipname
@@ -92,7 +106,7 @@ class BaseImporter {
     })
   }
 
-  async db(importer) {
+  async db(importer: GtfsImport) {
     for (const file of this.files) {
       await importer.upload(
         `${this.zipLocation}unarchived`,

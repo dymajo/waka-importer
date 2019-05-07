@@ -1,16 +1,4 @@
-import { createWriteStream, existsSync, mkdirSync } from 'fs'
-import { join, resolve as _resolve } from 'path'
-import * as rimraf from 'rimraf'
-import fetch from 'node-fetch'
-
-import log from '../../logger'
-import GtfsImport from '../../db/gtfs-import'
-import CreateShapes from '../../db/create-shapes'
-import connection from '../../db/connection'
-import Storage from '../../db/storage'
-import KeyvalueDynamo from '../../db/keyvalue-dynamo'
 import config from '../../config'
-import Importer from './BaseImporter'
 import MultiImporter from '../MultiImporter'
 
 const locations = [

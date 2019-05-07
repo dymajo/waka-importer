@@ -1,7 +1,7 @@
 import connection from '../../db/connection'
 import log from '../../logger'
 import config from '../../config'
-import BaseImporter from './BaseImporter'
+import BaseImporter from '../BaseImporter'
 
 class MetlinkImporter extends BaseImporter {
   constructor() {
