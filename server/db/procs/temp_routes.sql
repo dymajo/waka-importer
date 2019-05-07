@@ -3,7 +3,7 @@ CREATE TABLE temp_routes (
   route_id nvarchar(100) NOT NULL,
   agency_id nvarchar(100),
   route_short_name nvarchar(50) NOT NULL,
-  route_long_name nvarchar(150)\,
+  route_long_name nvarchar(150),
   route_desc nvarchar(150),
   route_type int NOT NULL,
   route_url nvarchar(150),
