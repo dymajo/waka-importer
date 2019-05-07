@@ -1,13 +1,16 @@
-import * as sql from 'mssql'
-import * as colors from 'colors'
+import { ConnectionPool } from 'mssql'
+import { red } from 'colors'
 import config from '../config'
 
 const connectMaster = async () => {
+  const masterConfig = {
+    ...config.db,
+    database: config.db.master_database,
+  }
   const { database } = config.db
-  const masterConfig = JSON.parse(JSON.stringify(config.db))
-  masterConfig.database = masterConfig.master_database
   try {
-    const pool = new sql.ConnectionPool(masterConfig)
+    const pool = new ConnectionPool(masterConfig)
+    await pool.connect()
     // prepared statements were not working.
     // also, you set this yourself, so your own fault if you drop all your tables
     await pool
@@ -15,8 +18,8 @@ const connectMaster = async () => {
       .query(`If(db_id(N'${database}') IS NULL) CREATE DATABASE "${database}"`)
   } catch (err) {
     console.error(
-      'master'.red,
-      'Failed to connect to master database! Check the db.database'.red
+      red('master'),
+      red('Failed to connect to master database! Check the db.database')
     )
     console.error(err)
     process.exit(1)
@@ -26,7 +29,7 @@ const connectMaster = async () => {
 
 let cresolve: any
 let creject: any
-let pool1: sql.ConnectionPool
+let pool1: ConnectionPool
 const ready = new Promise((resolve, reject) => {
   cresolve = resolve
   creject = reject
@@ -36,7 +39,7 @@ const connection = {
   open: () => {
     connectMaster()
       .then(() => {
-        pool1 = new sql.ConnectionPool(config.db, err => {
+        pool1 = new ConnectionPool(config.db, err => {
           if (err) {
             console.error(err)
             return creject()
