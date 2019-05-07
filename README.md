@@ -34,3 +34,9 @@ $ npm run build
 ```bash
 $ npm start
 ```
+
+## Quick start
+
+```bash
+$ npm run bs
+```
