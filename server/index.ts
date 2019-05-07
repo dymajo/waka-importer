@@ -1,4 +1,4 @@
-import 'dotenv'
+import 'dotenv/config'
 import connection from './db/connection'
 import CreateDb from './db/create'
 import log from './logger'
