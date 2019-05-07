@@ -21,7 +21,7 @@ class WellingtonImporter extends SingleImporter {
       WHERE stop_sequence = 0 and trips.trip_headsign is null
     `)
     log(
-      `${config.prefix} ${config.version}`.magenta,
+      `${config.prefix} ${config.version}`,
       'Post Import: Completed Trip Headsign Override'
     )
   }

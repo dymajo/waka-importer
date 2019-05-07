@@ -1,6 +1,5 @@
 import { join } from 'path'
 import { VarChar } from 'mssql'
-import { red } from 'colors'
 import log from '../logger.js'
 import GtfsImport from '../db/gtfs-import.js'
 import connection from '../db/connection.js'
@@ -64,7 +63,7 @@ class Importer {
       this.current = new Region()
     } catch (err) {
       log(
-        red('fatal error'),
+        'fatal error',
         'Could not find an importer in ',
         join(__dirname, './regions', `${config.prefix}.js`)
       )
@@ -150,7 +149,7 @@ class Importer {
     `)
     const rows = res.rowsAffected[0]
     log(
-      `${config.prefix} ${config.version}`.magenta,
+      `${config.prefix} ${config.version}`,
       `Updated ${rows} null stop codes`
     )
   }
@@ -164,7 +163,7 @@ class Importer {
     `)
     const rows = res.rowsAffected[0]
     log(
-      `${config.prefix} ${config.version}`.magenta,
+      `${config.prefix} ${config.version}`,
       `Updated ${rows} null route codes`
     )
   }

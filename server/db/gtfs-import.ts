@@ -277,7 +277,7 @@ class GtfsImport {
     const finalTable = this.getTable(file.table)
     if (table === null) return null
 
-    const logstr = file.table.toString().yellow
+    const logstr = file.table.toString()
     return new Promise((resolve, reject) => {
       const input = createReadStream(_resolve(location, file.name))
       input.on('error', reject)
@@ -387,7 +387,7 @@ class GtfsImport {
     }
     let table = this.getTable(file.table)
     if (table === null) return null
-    const logstr = file.table.toString().magenta
+    const logstr = file.table.toString()
     return new Promise((resolve, reject) => {
       const input = createReadStream(_resolve(location, file.name))
       input.on('error', reject)

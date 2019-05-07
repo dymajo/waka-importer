@@ -1,5 +1,4 @@
 import { ConnectionPool } from 'mssql'
-import { red } from 'colors'
 import config from '../config'
 
 const connectMaster = async () => {
@@ -18,8 +17,8 @@ const connectMaster = async () => {
       .query(`If(db_id(N'${database}') IS NULL) CREATE DATABASE "${database}"`)
   } catch (err) {
     console.error(
-      red('master'),
-      red('Failed to connect to master database! Check the db.database')
+      'master',
+'Failed to connect to master database! Check the db.database'
     )
     console.error(err)
     process.exit(1)

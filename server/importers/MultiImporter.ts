@@ -4,7 +4,6 @@ import * as rimraf from 'rimraf'
 import axios from 'axios'
 import * as extract from 'extract-zip'
 import { promisify } from 'util'
-import { red } from 'colors'
 import log from '../logger.js'
 import GtfsImport from '../db/gtfs-import.js'
 import CreateShapes from '../db/create-shapes.js'
@@ -73,7 +72,7 @@ abstract class MultiImporter extends BaseImporter {
       type,
       endpoint,
     }
-    log(config.prefix.magenta, 'Downloading GTFS Data', name)
+    log(config.prefix, 'Downloading GTFS Data', name)
     try {
       const res = await axios.get(endpoint, {
         headers: { Authorization: authorization },
@@ -81,7 +80,7 @@ abstract class MultiImporter extends BaseImporter {
       })
       const dest = createWriteStream(zipLocation.p)
       res.data.pipe(dest)
-      log(config.prefix.magenta, 'Finished Downloading GTFS Data', name)
+      log(config.prefix, 'Finished Downloading GTFS Data', name)
       this.zipLocations.push(zipLocation)
       return
     } catch (err) {
@@ -118,7 +117,7 @@ abstract class MultiImporter extends BaseImporter {
     try {
       await Promise.all(promises)
     } catch (error) {
-      log('fatal error'.red, error)
+      log('fatal error', error)
     }
   }
 
@@ -190,7 +189,7 @@ abstract class MultiImporter extends BaseImporter {
     `)
     const rows = res.rowsAffected[0]
     log(
-      `${config.prefix} ${config.version}`.magenta,
+      `${config.prefix} ${config.version}`,
       `Updated ${rows} null stop codes`
     )
   }
@@ -204,7 +203,7 @@ abstract class MultiImporter extends BaseImporter {
     `)
     const rows = res.rowsAffected[0]
     log(
-      `${config.prefix} ${config.version}`.magenta,
+      `${config.prefix} ${config.version}`,
       `Updated ${rows} null route codes`
     )
   }

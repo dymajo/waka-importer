@@ -3,7 +3,6 @@ import BaseImporter from "./BaseImporter";
 
 import { resolve as _resolve, join } from 'path'
 import { createWriteStream, existsSync, mkdirSync, writeFileSync } from 'fs'
-import * as colors from 'colors'
 
 import { promisify } from 'util'
 import * as rimraf from 'rimraf'
@@ -39,7 +38,7 @@ abstract class SingleImporter extends BaseImporter {
 
   async download() {
     try {
-      log(config.prefix.magenta, 'Downloading GTFS Data')
+      log(config.prefix, 'Downloading GTFS Data')
       debugger
       const res = await axios.get(this.downloadOptions.url, {
         responseType: 'stream',
@@ -47,7 +46,7 @@ abstract class SingleImporter extends BaseImporter {
       const dest = createWriteStream(this.zipLocation)
       res.data.pipe(dest)
 
-      log(config.prefix.magenta, 'Finished Downloading GTFS Data')
+      log(config.prefix, 'Finished Downloading GTFS Data')
     } catch (error) {
       log(error)
     }

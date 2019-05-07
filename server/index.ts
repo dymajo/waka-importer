@@ -3,7 +3,6 @@ import connection from './db/connection'
 import CreateDb from './db/create'
 import log from './logger'
 import Importer from './importers'
-import TfNSWImporter from './importers/regions/au-syd'
 import config from './config'
 
 log('Importer Started')
@@ -25,8 +24,8 @@ Object.keys(config).forEach(key => {
   return true
 })
 
-log('prefix: '.magenta, config.prefix)
-log('version:'.magenta, config.version)
+log('prefix: ', config.prefix)
+log('version:', config.version)
 
 const start = async () => {
   await connection.open()
