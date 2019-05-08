@@ -4,15 +4,14 @@ import * as rimraf from 'rimraf'
 import axios from 'axios'
 import * as extract from 'extract-zip'
 import { promisify } from 'util'
-import log from '../logger.js'
-import GtfsImport from '../db/gtfs-import.js'
-import CreateShapes from '../db/create-shapes.js'
-import connection from '../db/connection.js'
-import Storage from '../db/storage.js'
-import KeyvalueDynamo from '../db/keyvalue-dynamo.js'
+import log from '../logger'
+import GtfsImport from '../db/gtfs-import'
+import CreateShapes from '../db/create-shapes'
+import connection from '../db/connection'
+import Storage from '../db/storage'
+import KeyvalueDynamo from '../db/keyvalue-dynamo'
 import config from '../config'
-import BaseImporter from './BaseImporter.js';
-
+import BaseImporter from './BaseImporter'
 
 interface IMultiImporterProps {
   keyvalue?: string
@@ -25,15 +24,14 @@ interface IMultiImporterProps {
 }
 
 abstract class MultiImporter extends BaseImporter {
-
-  locations: any
-  authorization: any
-  importer: any
+  locations: { endpoint: string; name: string; type: string }[]
+  authorization?: string
+  importer: GtfsImport
   storage: Storage
-  downloadInterval: any
-  batchSize: any
-  versions: any
-  zipLocations: any[]
+  downloadInterval: number
+  batchSize: number
+  versions: KeyvalueDynamo
+  zipLocations: { p: string; type: string; endpoint: string }[]
 
   constructor(props: IMultiImporterProps) {
     super()
@@ -177,35 +175,6 @@ abstract class MultiImporter extends BaseImporter {
         _resolve(outputDir, config.version)
       )
     }
-  }
-
-  async fixStopCodes() {
-    // GTFS says it's optional, but Waka uses stop_code for stop lookups
-    const sqlRequest = connection.get().request()
-    const res = await sqlRequest.query(`
-      UPDATE stops
-      SET stop_code = stop_id
-      WHERE stop_code is null;
-    `)
-    const rows = res.rowsAffected[0]
-    log(
-      `${config.prefix} ${config.version}`,
-      `Updated ${rows} null stop codes`
-    )
-  }
-
-  async fixRoutes() {
-    const sqlRequest = connection.get().request()
-    const res = await sqlRequest.query(`
-      UPDATE routes
-      SET route_long_name = route_short_name
-      WHERE route_long_name is null;
-    `)
-    const rows = res.rowsAffected[0]
-    log(
-      `${config.prefix} ${config.version}`,
-      `Updated ${rows} null route codes`
-    )
   }
 }
 
