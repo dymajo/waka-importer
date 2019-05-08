@@ -118,115 +118,6 @@ class GtfsImport {
     })
   }
 
-  async mergeFirst(
-    location: string,
-    file: {
-      table:
-        | 'agency'
-        | 'stops'
-        | 'routes'
-        | 'trips'
-        | 'stop_times'
-        | 'calendar'
-        | 'calendar_dates'
-      name: string
-    },
-    version: string,
-    containsVersion: boolean,
-    endpoint: string
-  ) {
-    const hashName = `temp_${file.table}`
-    let table = this.getTable(file.table, hashName, true)
-    const finalTable = this.getTable(file.table)
-    if (table === null) return null
-
-    const logstr = file.table.toString()
-    return new Promise((resolve, reject) => {
-      const input = createReadStream(_resolve(location, file.name))
-      input.on('error', reject)
-      const parser = csvparse({ delimiter: ',' })
-      let headers: { [key: string]: number } = null
-      let transactions = 0
-      let totalTransactions = 0
-
-      const transformer = transform(
-        async (row, callback) => {
-          // builds the csv headers for easy access later
-          if (headers === null) {
-            headers = {}
-            row.forEach((item, index) => {
-              headers[item] = index
-            })
-            return callback(null)
-          }
-
-          const processRow = async () => {
-            if (row && row.length > 1) {
-              const tableSchema = schemas[file.table]
-              if (tableSchema) {
-                const record = this._mapRowToRecord(row, headers, tableSchema)
-
-                // check if the row is versioned, and whether to upload it
-                if (
-                  containsVersion &&
-                  record.join(',').match(version) === null
-                ) {
-                  return
-                }
-
-                table.rows.add(...record)
-
-                transactions += 1
-                totalTransactions += 1
-              }
-            }
-          }
-
-          // assembles our CSV into JSON
-          if (transactions < config.db.transactionLimit) {
-            processRow()
-            callback(null)
-          } else {
-            log(endpoint, logstr, `${totalTransactions / 1000}k Rows`)
-            try {
-              await this.commit(table)
-              log(endpoint, logstr, 'Transaction Committed.')
-              transactions = 0
-              // await this.mergeToFinal(config.table, hashName)
-              // log(endpoint, logstr, 'Merge Committed.')
-              table = this.getTable(file.table)
-              processRow()
-              callback(null)
-            } catch (err) {
-              console.log(err)
-            }
-          }
-        },
-        { parallel: 1 }
-      )
-      transformer.on('finish', async () => {
-        const transactionsStr =
-          totalTransactions > 1000
-            ? `${Math.round(totalTransactions / 1000)}k`
-            : `${totalTransactions}`
-
-        log(endpoint, logstr, transactionsStr, 'Rows')
-        try {
-          await this.commit(table)
-
-          log(endpoint, logstr, 'Transaction Committed.')
-          await this.mergeToFinal(file.table)
-          log(endpoint, logstr, 'Merge Committed.')
-          resolve()
-        } catch (error) {
-          reject(error)
-        }
-      })
-
-      input.pipe(parser).pipe(transformer)
-    })
-  }
-
   async upload(
     location: string,
     file: {
@@ -245,10 +136,9 @@ class GtfsImport {
     endpoint?: string,
     merge: boolean = false
   ) {
-    if (merge) {
-      return this.mergeFirst(location, file, version, containsVersion, endpoint)
-    }
-    let table = this.getTable(file.table)
+    let table = merge
+      ? this.getTable(file.table, `temp_${file.table}`, true)
+      : this.getTable(file.table)
     if (table === null) return null
     const logstr = file.table.toString()
     return new Promise((resolve, reject) => {
@@ -323,6 +213,10 @@ class GtfsImport {
           await this.commit(table)
 
           log(endpoint, logstr, 'Transaction Committed.')
+          if (merge) {
+            await this.mergeToFinal(file.table)
+            log(endpoint, logstr, 'Merge Committed.')
+          }
           resolve()
         } catch (error) {
           reject(error)
