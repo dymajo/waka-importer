@@ -36,24 +36,31 @@ class GtfsImport {
     if (hash) {
       table.create = true
     }
-    if (name === 'agency') {
-      agencyCreator(table)
-    } else if (name === 'stops') {
-      stopsCreator(table)
-    } else if (name === 'routes') {
-      routesCreator(table)
-    } else if (name === 'trips') {
-      tripsCreator(table)
-    } else if (name === 'stop_times') {
-      stopTimesCreator(table)
-    } else if (name === 'calendar') {
-      calendarCreator(table)
-    } else if (name === 'calendar_dates') {
-      calendarDatesCreator(table)
-    } else {
-      return null
+    switch (name) {
+      case 'agency':
+        return agencyCreator(table)
+
+      case 'stops':
+        return stopsCreator(table)
+
+      case 'routes':
+        return routesCreator(table)
+
+      case 'trips':
+        return tripsCreator(table)
+
+      case 'stop_times':
+        return stopTimesCreator(table)
+
+      case 'calendar':
+        return calendarCreator(table)
+
+      case 'calendar_dates':
+        return calendarDatesCreator(table)
+
+      default:
+        return null
     }
-    return table
   }
 
   _mapRowToRecord(

@@ -13,6 +13,7 @@ export const agencyCreator = (table: Table) => {
     nullable: true,
   })
   table.columns.add('agency_email', VarChar(50), { nullable: true })
+  return table
 }
 
 export const stopsCreator = (table: Table) => {
@@ -28,6 +29,7 @@ export const stopsCreator = (table: Table) => {
   table.columns.add('parent_station', VarChar(100), { nullable: true })
   table.columns.add('stop_timezone', VarChar(100), { nullable: true })
   table.columns.add('wheelchair_boarding', Int, { nullable: true })
+  return table
 }
 
 export const routesCreator = (table: Table) => {
@@ -46,6 +48,7 @@ export const routesCreator = (table: Table) => {
   table.columns.add('route_text_color', VarChar(50), {
     nullable: true,
   })
+  return table
 }
 
 export const tripsCreator = (table: Table) => {
@@ -59,6 +62,7 @@ export const tripsCreator = (table: Table) => {
   table.columns.add('shape_id', VarChar(100), { nullable: true })
   table.columns.add('wheelchair_accessible', Int, { nullable: true })
   table.columns.add('bikes_allowed', Int, { nullable: true })
+  return table
 }
 
 export const stopTimesCreator = (table: Table) => {
@@ -76,6 +80,7 @@ export const stopTimesCreator = (table: Table) => {
     nullable: true,
   })
   table.columns.add('timepoint', Int, { nullable: true })
+  return table
 }
 
 export const calendarCreator = (table: Table) => {
@@ -89,10 +94,12 @@ export const calendarCreator = (table: Table) => {
   table.columns.add('sunday', Bit, { nullable: false })
   table.columns.add('start_date', _Date, { nullable: false })
   table.columns.add('end_date', _Date, { nullable: false })
+  return table
 }
 
 export const calendarDatesCreator = (table: Table) => {
   table.columns.add('service_id', VarChar(100), { nullable: false })
   table.columns.add('date', _Date, { nullable: false })
   table.columns.add('exception_type', Int, { nullable: false })
+  return table
 }

@@ -27,17 +27,21 @@ Object.keys(config).forEach(key => {
 log('prefix: ', config.prefix)
 log('version:', config.version)
 
-const start = async () => {
-  await connection.open()
-
-  log('Connected to Database')
+const checkCreated = async () => {
   const sqlRequest = connection.get().request()
   const databaseCreated = await sqlRequest.query<{ dbcreated: number }>(
     `
     select OBJECT_ID('agency', 'U') as 'dbcreated'
     `
   )
-  const created = !(databaseCreated.recordset[0].dbcreated === null)
+  return !(databaseCreated.recordset[0].dbcreated === null)
+}
+
+const start = async () => {
+  await connection.open()
+
+  log('Connected to Database')
+  const created = await checkCreated()
   if (!created) {
     log('Building Database from Template')
     const creator = new CreateDb()
@@ -51,25 +55,33 @@ const start = async () => {
     keyvalueRegion: config.keyValueRegion,
   })
   const { mode } = config
-  console.log(mode)
-  if (mode === 'all') {
-    log('Started import of ALL')
-    await importer.start(created)
-  } else if (mode === 'db') {
-    log('Started import of DB')
-    await importer.db()
-  } else if (mode === 'shapes') {
-    log('Started import of SHAPES')
-    await importer.shapes()
-  } else if (mode === 'unzip') {
-    log('Started UNZIP')
-    await importer.unzip()
-  } else if (mode === 'download') {
-    log('Started DOWNLOAD')
-    await importer.download()
-  } else if (mode === 'export') {
-    log('Started EXPORT')
-    await importer.exportDb()
+  switch (mode) {
+    case 'all':
+      log('Started import of ALL')
+      await importer.start(created)
+      break
+    case 'db':
+      log('Started import of DB')
+      await importer.db()
+      break
+    case 'shapes':
+      log('Started import of SHAPES')
+      await importer.shapes()
+      break
+    case 'unzip':
+      log('Started UNZIP')
+      await importer.unzip()
+      break
+    case 'download':
+      log('Started DOWNLOAD')
+      await importer.download()
+      break
+    case 'export':
+      log('Started EXPORT')
+      await importer.exportDb()
+      break
+    default:
+      break
   }
   log(`Completed ${mode.toUpperCase()}`)
   process.exit(0)
