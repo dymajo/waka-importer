@@ -6,7 +6,16 @@ import { resolve as _resolve } from 'path'
 import connection from './connection'
 import log from '../logger'
 import config from '../config'
-
+import schemas from './schemas'
+import {
+  agencyCreator,
+  stopsCreator,
+  routesCreator,
+  tripsCreator,
+  stopTimesCreator,
+  calendarCreator,
+  calendarDatesCreator,
+} from './tableCreator'
 const primaryKeys = {
   agency: 'agency_id',
   stops: 'stop_id',
@@ -15,83 +24,6 @@ const primaryKeys = {
   stop_times: 'trip_id',
   calendar: 'service_id',
   calendar_dates: 'service_id',
-}
-
-const schemas = {
-  agency: [
-    'agency_id',
-    'agency_name',
-    'agency_url',
-    'agency_timezone',
-    'agency_lang',
-    'agency_phone',
-    'agency_fare_url',
-    'agency_email',
-  ],
-  stops: [
-    'stop_id',
-    'stop_code',
-    'stop_name',
-    'stop_desc',
-    'stop_lat',
-    'stop_lon',
-    'zone_id',
-    'stop_url',
-    'location_type',
-    'parent_station',
-    'stop_timezone',
-    'wheelchair_boarding',
-  ],
-  routes: [
-    'route_id',
-    'agency_id',
-    'route_short_name',
-    'route_long_name',
-    'route_desc',
-    'route_type',
-    'route_url',
-    'route_color',
-    'route_text_color',
-  ],
-  trips: [
-    'route_id',
-    'service_id',
-    'trip_id',
-    'trip_headsign',
-    'trip_short_name',
-    'direction_id',
-    'block_id',
-    'shape_id',
-    'wheelchair_accessible',
-    'bikes_allowed',
-  ],
-  stop_times: [
-    'trip_id',
-    'arrival_time',
-    'departure_time',
-    'arrival_time_24',
-    'departure_time_24',
-    'stop_id',
-    'stop_sequence',
-    'stop_headsign',
-    'pickup_type',
-    'drop_off_type',
-    'shape_dist_traveled',
-    'timepoint',
-  ],
-  calendar: [
-    'service_id',
-    'monday',
-    'tuesday',
-    'wednesday',
-    'thursday',
-    'friday',
-    'saturday',
-    'sunday',
-    'start_date',
-    'end_date',
-  ],
-  calendar_dates: ['service_id', 'date', 'exception_type'],
 }
 
 class GtfsImport {
@@ -105,88 +37,19 @@ class GtfsImport {
       table.create = true
     }
     if (name === 'agency') {
-      table.columns.add('agency_id', VarChar(50), { nullable: false })
-      table.columns.add('agency_name', VarChar(100), { nullable: false })
-      table.columns.add('agency_url', VarChar(100), { nullable: false })
-      table.columns.add('agency_timezone', VarChar(100), {
-        nullable: false,
-      })
-      table.columns.add('agency_lang', VarChar(50), { nullable: true })
-      table.columns.add('agency_phone', VarChar(50), { nullable: true })
-      table.columns.add('agency_fare_url', VarChar(100), {
-        nullable: true,
-      })
-      table.columns.add('agency_email', VarChar(50), { nullable: true })
+      agencyCreator(table)
     } else if (name === 'stops') {
-      table.columns.add('stop_id', VarChar(100), { nullable: false })
-      table.columns.add('stop_code', VarChar(50), { nullable: true })
-      table.columns.add('stop_name', VarChar(100), { nullable: false })
-      table.columns.add('stop_desc', VarChar(150), { nullable: true })
-      table.columns.add('stop_lat', Decimal(10, 6), { nullable: false })
-      table.columns.add('stop_lon', Decimal(10, 6), { nullable: false })
-      table.columns.add('zone_id', VarChar(50), { nullable: true })
-      table.columns.add('stop_url', VarChar(100), { nullable: true })
-      table.columns.add('location_type', Int, { nullable: true })
-      table.columns.add('parent_station', VarChar(100), { nullable: true })
-      table.columns.add('stop_timezone', VarChar(100), { nullable: true })
-      table.columns.add('wheelchair_boarding', Int, { nullable: true })
+      stopsCreator(table)
     } else if (name === 'routes') {
-      table.columns.add('route_id', VarChar(100), { nullable: false })
-      table.columns.add('agency_id', VarChar(100), { nullable: true })
-      table.columns.add('route_short_name', VarChar(50), {
-        nullable: false,
-      })
-      table.columns.add('route_long_name', VarChar(150), {
-        nullable: true,
-      })
-      table.columns.add('route_desc', VarChar(150), { nullable: true })
-      table.columns.add('route_type', Int, { nullable: false })
-      table.columns.add('route_url', VarChar(150), { nullable: true })
-      table.columns.add('route_color', VarChar(50), { nullable: true })
-      table.columns.add('route_text_color', VarChar(50), {
-        nullable: true,
-      })
+      routesCreator(table)
     } else if (name === 'trips') {
-      table.columns.add('route_id', VarChar(100), { nullable: false })
-      table.columns.add('service_id', VarChar(100), { nullable: false })
-      table.columns.add('trip_id', VarChar(100), { nullable: false })
-      table.columns.add('trip_headsign', VarChar(100), { nullable: true })
-      table.columns.add('trip_short_name', VarChar(50), { nullable: true })
-      table.columns.add('direction_id', Int, { nullable: true })
-      table.columns.add('block_id', VarChar(100), { nullable: true })
-      table.columns.add('shape_id', VarChar(100), { nullable: true })
-      table.columns.add('wheelchair_accessible', Int, { nullable: true })
-      table.columns.add('bikes_allowed', Int, { nullable: true })
+      tripsCreator(table)
     } else if (name === 'stop_times') {
-      table.columns.add('trip_id', VarChar(100), { nullable: false })
-      table.columns.add('arrival_time', Time(0), { nullable: false })
-      table.columns.add('departure_time', Time(0), { nullable: false })
-      table.columns.add('arrival_time_24', Bit, { nullable: false })
-      table.columns.add('departure_time_24', Bit, { nullable: false })
-      table.columns.add('stop_id', VarChar(50), { nullable: false })
-      table.columns.add('stop_sequence', Int, { nullable: false })
-      table.columns.add('stop_headsign', VarChar(50), { nullable: true })
-      table.columns.add('pickup_type', Int, { nullable: true })
-      table.columns.add('drop_off_type', Int, { nullable: true })
-      table.columns.add('shape_dist_traveled', VarChar(50), {
-        nullable: true,
-      })
-      table.columns.add('timepoint', Int, { nullable: true })
+      stopTimesCreator(table)
     } else if (name === 'calendar') {
-      table.columns.add('service_id', VarChar(100), { nullable: false })
-      table.columns.add('monday', Bit, { nullable: false })
-      table.columns.add('tuesday', Bit, { nullable: false })
-      table.columns.add('wednesday', Bit, { nullable: false })
-      table.columns.add('thursday', Bit, { nullable: false })
-      table.columns.add('friday', Bit, { nullable: false })
-      table.columns.add('saturday', Bit, { nullable: false })
-      table.columns.add('sunday', Bit, { nullable: false })
-      table.columns.add('start_date', _Date, { nullable: false })
-      table.columns.add('end_date', _Date, { nullable: false })
+      calendarCreator(table)
     } else if (name === 'calendar_dates') {
-      table.columns.add('service_id', VarChar(100), { nullable: false })
-      table.columns.add('date', _Date, { nullable: false })
-      table.columns.add('exception_type', Int, { nullable: false })
+      calendarDatesCreator(table)
     } else {
       return null
     }
@@ -214,7 +77,7 @@ class GtfsImport {
         return date
         // i hate this library
       }
-      if (
+      const dayOfTheWeek = (column: string) =>
         column === 'monday' ||
         column === 'tuesday' ||
         column === 'wednesday' ||
@@ -222,7 +85,7 @@ class GtfsImport {
         column === 'friday' ||
         column === 'saturday' ||
         column === 'sunday'
-      ) {
+      if (dayOfTheWeek(column)) {
         return row[rowSchema[column]] === '1'
       }
       if (column === 'arrival_time' || column === 'departure_time') {
