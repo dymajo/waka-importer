@@ -1,10 +1,10 @@
 import { join } from 'path'
 import { VarChar } from 'mssql'
-import log from '../logger.js'
-import GtfsImport from '../db/gtfs-import.js'
-import connection from '../db/connection.js'
-import Storage from '../db/storage.js'
-import KeyvalueDynamo from '../db/keyvalue-dynamo.js'
+import log from '../logger'
+import GtfsImport from '../db/gtfs-import'
+import connection from '../db/connection'
+import Storage from '../db/storage'
+import KeyvalueDynamo from '../db/keyvalue-dynamo'
 import config from '../config'
 
 import AucklandImporter from './regions/nz-akl'
@@ -17,8 +17,8 @@ import MelbourneImporter from './regions/au-mel'
 import ParisImporter from './regions/fr-par'
 import SEQImporter from './regions/au-seq'
 import SFRImporter from './regions/ch-sfr'
-import BaseImporter from './BaseImporter.js'
-import MultiImporter from './MultiImporter.js'
+import BaseImporter from './BaseImporter'
+import MultiImporter from './MultiImporter'
 
 const regions = {
   'nz-akl': AucklandImporter,
@@ -65,7 +65,7 @@ class Importer {
       log(
         'fatal error',
         'Could not find an importer in ',
-        join(__dirname, './regions', `${config.prefix}.js`)
+        join(__dirname, './regions', `${config.prefix}.ts`)
       )
     }
   }
