@@ -102,18 +102,23 @@ abstract class MultiImporter extends BaseImporter {
   }
 
   async unzip() {
-    const promises = []
-    for (const { p } of this.zipLocations) {
-      const extractor = promisify(extract.default)
-
-      promises.push(
-        extractor(p, {
+    try {
+      await Promise.all(
+        this.zipLocations.map(({ p }) => {
+          return new Promise((resolve, reject) => {
+            extract(
+              p,
+              {
           dir: _resolve(`${p}unarchived`),
+              },
+              err => {
+                if (err) reject(err)
+                resolve()
+              }
+            )
+          })
         })
       )
-    }
-    try {
-      await Promise.all(promises)
     } catch (error) {
       log('fatal error', error)
     }

@@ -39,14 +39,18 @@ abstract class SingleImporter extends BaseImporter {
   async download() {
     try {
       log(config.prefix, 'Downloading GTFS Data')
-      debugger
       const res = await axios.get(this.downloadOptions.url, {
         responseType: 'stream',
       })
       const dest = createWriteStream(this.zipLocation)
       res.data.pipe(dest)
-
+      return new Promise((resolve, reject) => {
+        dest.on('finish', () => {
       log(config.prefix, 'Finished Downloading GTFS Data')
+          resolve()
+        })
+        dest.on('error', reject)
+      })
     } catch (error) {
       log(error)
     }
@@ -55,10 +59,17 @@ abstract class SingleImporter extends BaseImporter {
   async unzip() {
     log('Unzipping GTFS Data')
     const { zipLocation } = this
-    const extractor = promisify(extract.default)
-
-    await extractor(zipLocation, {
+    return new Promise((resolve, reject) => {
+      extract(
+        zipLocation,
+        {
       dir: _resolve(`${zipLocation}unarchived`),
+        },
+        err => {
+          if (err) reject(err)
+          resolve()
+        }
+      )
     })
   }
 
