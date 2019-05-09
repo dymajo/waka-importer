@@ -188,6 +188,11 @@ const locations = [
     type: 'train',
     name: 'tfnswtrains2',
   },
+  {
+    endpoint: 'https://api.transport.nsw.gov.au/v1/gtfs/schedule/metro',
+    type: 'metro',
+    name: 'metro',
+  },
 ]
 
 class SydneyImporter extends MultiImporter {
