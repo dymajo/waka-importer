@@ -75,7 +75,7 @@ abstract class SingleImporter extends BaseImporter {
 
   async shapes() {
     if (!existsSync(this.zipLocation)) {
-      console.warn('Shapes could not be found!')
+      log('Shapes could not be found!')
       return
     }
 

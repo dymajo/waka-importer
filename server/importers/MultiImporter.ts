@@ -82,7 +82,7 @@ abstract class MultiImporter extends BaseImporter {
       this.zipLocations.push(zipLocation)
       return
     } catch (err) {
-      console.error(err)
+      log(err)
     }
   }
 
@@ -91,7 +91,7 @@ abstract class MultiImporter extends BaseImporter {
     function timeout(ms: number) {
       return new Promise(resolve => setTimeout(resolve, ms))
     }
-    console.log(batchSize, downloadInterval)
+    log(batchSize, downloadInterval)
     for (let index = 0; index < locations.length; index++) {
       const location = locations[index]
       await this.get(location)
@@ -133,7 +133,7 @@ abstract class MultiImporter extends BaseImporter {
             true
           )
         } catch (error) {
-          console.error(error)
+          log(error)
         }
       }
     }
@@ -143,7 +143,7 @@ abstract class MultiImporter extends BaseImporter {
     const { zipLocations } = this
     for (const { p } of zipLocations) {
       if (!existsSync(p)) {
-        console.warn('Shapes could not be found!')
+        log('Shapes could not be found!')
         return
       }
       const creator = new CreateShapes()

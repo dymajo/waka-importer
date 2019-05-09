@@ -99,7 +99,7 @@ class Importer {
       await this.unzip()
       await this.db()
     } else {
-      console.warn('DB already created - skipping download & unzip.')
+      log('DB already created - skipping download & unzip.')
     }
     await this.shapes()
     await this.fixStopCodes()
@@ -148,10 +148,7 @@ class Importer {
       WHERE stop_code is null;
     `)
     const rows = res.rowsAffected[0]
-    log(
-      `${config.prefix} ${config.version}`,
-      `Updated ${rows} null stop codes`
-    )
+    log(`${config.prefix} ${config.version}`, `Updated ${rows} null stop codes`)
   }
 
   async fixRoutes() {
@@ -192,7 +189,7 @@ class Importer {
         `
       )
     } catch (err) {
-      console.log(err)
+      log(err)
     }
   }
 }

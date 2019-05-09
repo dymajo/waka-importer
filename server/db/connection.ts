@@ -1,6 +1,6 @@
 import { ConnectionPool } from 'mssql'
 import config from '../config'
-
+import log from '../logger'
 const connectMaster = async () => {
   const masterConfig = {
     ...config.db,
@@ -16,11 +16,8 @@ const connectMaster = async () => {
       .request()
       .query(`If(db_id(N'${database}') IS NULL) CREATE DATABASE "${database}"`)
   } catch (err) {
-    console.error(
-      'master',
-'Failed to connect to master database! Check the db.database'
-    )
-    console.error(err)
+    log('master', 'Failed to connect to master database! Check the db.database')
+    log(err)
     process.exit(1)
   }
   return true
@@ -40,7 +37,7 @@ const connection = {
       .then(() => {
         pool1 = new ConnectionPool(config.db, err => {
           if (err) {
-            console.error(err)
+            log(err)
             return creject()
           }
           return cresolve()

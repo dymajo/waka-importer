@@ -1,6 +1,6 @@
 import { createReadStream } from 'fs'
 import config from '../config'
-
+import log from '../logger'
 const azuretestcreds = [
   'devstoreaccount1',
   'Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==',
@@ -36,7 +36,7 @@ class Storage {
   createContainer(container: string, cb: any) {
     const createCb = (error: any) => {
       if (error) {
-        console.error(error)
+        log(error)
         throw error
       }
       cb()
