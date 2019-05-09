@@ -1,15 +1,14 @@
-import BaseImporter from "./BaseImporter";
-
+import BaseImporter from './BaseImporter'
 
 import { resolve as _resolve, join } from 'path'
 import { createWriteStream, existsSync, mkdirSync, writeFileSync } from 'fs'
 
 import { promisify } from 'util'
-import * as rimraf from 'rimraf'
-import * as extract from 'extract-zip'
+import rimraf from 'rimraf'
+import extract from 'extract-zip'
 import config from '../config'
-import log from '../logger.js'
-import CreateShapes from '../db/create-shapes.js'
+import log from '../logger'
+import CreateShapes from '../db/create-shapes'
 import Importer from '.'
 import GtfsImport from '../db/gtfs-import'
 import axios from 'axios'
@@ -31,7 +30,6 @@ abstract class SingleImporter extends BaseImporter {
     this.zipname = zipname
     this.url = url
 
-
     this.zipLocation = join(__dirname, `../../cache/${this.zipname}.zip`)
     this.downloadOptions = { url: this.url }
   }
@@ -46,7 +44,7 @@ abstract class SingleImporter extends BaseImporter {
       res.data.pipe(dest)
       return new Promise((resolve, reject) => {
         dest.on('finish', () => {
-      log(config.prefix, 'Finished Downloading GTFS Data')
+          log(config.prefix, 'Finished Downloading GTFS Data')
           resolve()
         })
         dest.on('error', reject)
@@ -63,7 +61,7 @@ abstract class SingleImporter extends BaseImporter {
       extract(
         zipLocation,
         {
-      dir: _resolve(`${zipLocation}unarchived`),
+          dir: _resolve(`${zipLocation}unarchived`),
         },
         err => {
           if (err) reject(err)
@@ -103,7 +101,7 @@ abstract class SingleImporter extends BaseImporter {
     // cleans up old import if exists
     if (existsSync(outputDir2)) {
       await new Promise((resolve, reject) => {
-        rimraf.default(outputDir2, resolve)
+        rimraf(outputDir2, resolve)
       })
     }
     mkdirSync(outputDir2)

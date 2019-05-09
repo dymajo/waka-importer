@@ -1,13 +1,11 @@
 import { existsSync, createWriteStream, mkdirSync, writeFileSync } from 'fs'
 import { resolve as _resolve, join } from 'path'
-import * as rimraf from 'rimraf'
+import rimraf from 'rimraf'
 import axios from 'axios'
-import * as extract from 'extract-zip'
-import { promisify } from 'util'
+import extract from 'extract-zip'
 import log from '../logger'
 import GtfsImport from '../db/gtfs-import'
 import CreateShapes from '../db/create-shapes'
-import connection from '../db/connection'
 import Storage from '../db/storage'
 import KeyvalueDynamo from '../db/keyvalue-dynamo'
 import config from '../config'
@@ -76,11 +74,16 @@ abstract class MultiImporter extends BaseImporter {
         headers: { Authorization: authorization },
         responseType: 'stream',
       })
+      this.zipLocations.push(zipLocation)
       const dest = createWriteStream(zipLocation.p)
       res.data.pipe(dest)
-      log(config.prefix, 'Finished Downloading GTFS Data', name)
-      this.zipLocations.push(zipLocation)
-      return
+      return new Promise((resolve, reject) => {
+        dest.on('finish', () => {
+          log(config.prefix, 'Finished Downloading GTFS Data', name)
+          resolve()
+        })
+        dest.on('error', reject)
+      })
     } catch (err) {
       log(err)
     }
@@ -109,7 +112,7 @@ abstract class MultiImporter extends BaseImporter {
             extract(
               p,
               {
-          dir: _resolve(`${p}unarchived`),
+                dir: _resolve(`${p}unarchived`),
               },
               err => {
                 if (err) reject(err)
