@@ -1,9 +1,10 @@
-import { Table, VarChar, Decimal, Int, Bit, Time, Date as _Date } from 'mssql'
+import { Table, VarChar, Decimal, Int, Bit, Time, Date as _Date, NVarChar } from 'mssql'
 
 const varCharLength = {
   small: 50,
   medium: 100,
   large: 150,
+  xl:1000
 }
 
 const decimalPrecision = 10
@@ -84,7 +85,7 @@ export const routesCreator = (table: Table) => {
   table.columns.add('route_long_name', VarChar(varCharLength.large), {
     nullable: true,
   })
-  table.columns.add('route_desc', VarChar(varCharLength.large), {
+  table.columns.add('route_desc', VarChar(varCharLength.xl), {
     nullable: true,
   })
   table.columns.add('route_type', Int, { nullable: false })
@@ -175,4 +176,12 @@ export const calendarDatesCreator = (table: Table) => {
   table.columns.add('date', _Date, { nullable: false })
   table.columns.add('exception_type', Int, { nullable: false })
   return table
+}
+
+export const transfersCreator = (table:Table)=> {
+  table.columns.add('from_stop_id',NVarChar(varCharLength.medium),{nullable:false})
+  table.columns.add('to_stop_id',NVarChar(varCharLength.medium),{nullable:false})
+  table.columns.add('transfer_type',Int,{nullable:false})
+  table.columns.add('min_transfer_time',Int,{nullable:true})
+
 }

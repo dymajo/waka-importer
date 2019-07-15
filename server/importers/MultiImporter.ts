@@ -70,8 +70,9 @@ abstract class MultiImporter extends BaseImporter {
     }
     log(config.prefix, 'Downloading GTFS Data', name)
     try {
+      const headers = authorization ?  { Authorization: authorization }: null
       const res = await axios.get(endpoint, {
-        headers: { Authorization: authorization },
+        headers,
         responseType: 'stream',
       })
       this.zipLocations.push(zipLocation)

@@ -17,6 +17,7 @@ import MelbourneImporter from './regions/au-mel'
 import ParisImporter from './regions/fr-par'
 import SEQImporter from './regions/au-seq'
 import SFRImporter from './regions/ch-sfr'
+import NYCImporter from './regions/us-nyc'
 import BaseImporter from './BaseImporter'
 import MultiImporter from './MultiImporter'
 
@@ -31,6 +32,7 @@ const regions = {
   'ch-sfr': SFRImporter,
   'au-syd': SyndeyImporter,
   'au-cbr': CanberraImporter,
+  'us-nyc':NYCImporter
 }
 
 interface ImporterProps {

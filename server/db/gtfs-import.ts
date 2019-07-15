@@ -15,6 +15,7 @@ import {
   stopTimesCreator,
   calendarCreator,
   calendarDatesCreator,
+  transfersCreator
 } from './tableCreator'
 const primaryKeys = {
   agency: 'agency_id',
