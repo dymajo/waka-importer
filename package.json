@@ -46,7 +46,7 @@
     "aws-sdk": "^2.518.0",
     "axios": "^0.19.0",
     "bunyan": "^1.8.12",
-    "csv-parse": "^4.4.5",
+    "csv-parse": "^4.4.6",
     "dotenv": "^8.1.0",
     "extract-zip": "^1.6.7",
     "form-data": "^2.5.0",
