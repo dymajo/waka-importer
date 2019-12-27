@@ -39,6 +39,9 @@ export const agencyCreator = (table: Table) => {
   table.columns.add('agency_email', VarChar(varCharLength.small), {
     nullable: true,
   })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
 
@@ -73,6 +76,9 @@ export const stopsCreator = (table: Table) => {
     nullable: true,
   })
   table.columns.add('wheelchair_boarding', Int, { nullable: true })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
 
@@ -100,6 +106,9 @@ export const routesCreator = (table: Table) => {
     nullable: true,
   })
   table.columns.add('route_text_color', VarChar(varCharLength.small), {
+    nullable: true,
+  })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
     nullable: true,
   })
   return table
@@ -130,6 +139,13 @@ export const tripsCreator = (table: Table) => {
   })
   table.columns.add('wheelchair_accessible', Int, { nullable: true })
   table.columns.add('bikes_allowed', Int, { nullable: true })
+  table.columns.add('consist', Int, { nullable: true })
+  table.columns.add('set_type', VarChar(varCharLength.small), {
+    nullable: true,
+  })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
 
@@ -154,6 +170,9 @@ export const stopTimesCreator = (table: Table) => {
     nullable: true,
   })
   table.columns.add('timepoint', Int, { nullable: true })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
 
@@ -170,6 +189,9 @@ export const calendarCreator = (table: Table) => {
   table.columns.add('sunday', Bit, { nullable: false })
   table.columns.add('start_date', _Date, { nullable: false })
   table.columns.add('end_date', _Date, { nullable: false })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
 
@@ -179,6 +201,9 @@ export const calendarDatesCreator = (table: Table) => {
   })
   table.columns.add('date', _Date, { nullable: false })
   table.columns.add('exception_type', Int, { nullable: false })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
 
@@ -191,6 +216,9 @@ export const transfersCreator = (table: Table) => {
   })
   table.columns.add('transfer_type', Int, { nullable: false })
   table.columns.add('min_transfer_time', Int, { nullable: true })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
 
@@ -202,5 +230,8 @@ export const frequenciesCreator = (table: Table) => {
   table.columns.add('end_time', Time(0), { nullable: false })
   table.columns.add('headway_sec', Int, { nullable: false })
   table.columns.add('exact_times', Int, { nullable: true })
+  table.columns.add('import_package', VarChar(varCharLength.small), {
+    nullable: true,
+  })
   return table
 }
