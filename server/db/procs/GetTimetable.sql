@@ -4,8 +4,8 @@
 -- Description:	Retrieves timetable for a station.
 -- =============================================
 CREATE PROCEDURE [dbo].[GetTimetable]
-	@stop_id nvarchar(100),
-	@route_short_name nvarchar(50),
+	@stop_id VARCHAR(100),
+	@route_short_name VARCHAR(50),
 	@date date,
 	@direction int
 AS
@@ -34,17 +34,17 @@ BEGIN
 		routes.route_long_name,
 		routes.agency_id
 	FROM stop_times
-	LEFT JOIN stops
+		LEFT JOIN stops
 		on stop_times.stop_id = stops.stop_id
-	LEFT JOIN trips
+		LEFT JOIN trips
 		on stop_times.trip_id = trips.trip_id
-	LEFT JOIN routes
+		LEFT JOIN routes
 		on trips.route_id = routes.route_id
-	LEFT JOIN calendar
+		LEFT JOIN calendar
 		on trips.service_id = calendar.service_id
-	LEFT JOIN calendar_dates
+		LEFT JOIN calendar_dates
 		on trips.service_id = calendar_dates.service_id and
-		calendar_dates.date = @date
+			calendar_dates.date = @date
 	WHERE
 		(stops.parent_station = @stop_id or stops.stop_code = @stop_id) and
 		routes.route_short_name = @route_short_name and
@@ -55,7 +55,7 @@ BEGIN
 			WHEN @direction = 2 THEN 2
 			ELSE trips.direction_id
 		END = @direction and
-		(CASE 
+		(CASE
 			WHEN @Day = 1 THEN calendar.sunday
             WHEN @Day = 2 THEN calendar.monday
             WHEN @Day = 3 THEN calendar.tuesday
@@ -63,7 +63,7 @@ BEGIN
 			WHEN @Day = 5 THEN calendar.thursday
 			WHEN @Day = 6 THEN calendar.friday
 			WHEN @Day = 7 THEN calendar.saturday
-            ELSE 0 
+            ELSE 0
         END = 1 or exception_type = 1)
 
 	ORDER BY departure_time_24, departure_time

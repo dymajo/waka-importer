@@ -1,15 +1,17 @@
-CREATE TABLE calendar (
-  id int NOT NULL IDENTITY(1,1) PRIMARY KEY NONCLUSTERED,
-  service_id nvarchar(100) NOT NULL,
-  monday bit NOT NULL,
-  tuesday bit NOT NULL,
-  wednesday bit NOT NULL,
-  thursday bit NOT NULL,
-  friday bit NOT NULL,
-  saturday bit NOT NULL,
-  sunday bit NOT NULL,
-  start_date date NOT NULL,
-  end_date date NOT NULL,
+CREATE TABLE calendar
+(
+  id INT NOT NULL IDENTITY(1,1) PRIMARY KEY NONCLUSTERED,
+  service_id VARCHAR(100) NOT NULL,
+  monday BIT NOT NULL,
+  tuesday BIT NOT NULL,
+  wednesday BIT NOT NULL,
+  thursday BIT NOT NULL,
+  friday BIT NOT NULL,
+  saturday BIT NOT NULL,
+  sunday BIT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  import_package VARCHAR(50),
 );
 
 CREATE CLUSTERED INDEX IX_Calendar_service_id

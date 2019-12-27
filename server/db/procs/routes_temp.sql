@@ -1,14 +1,15 @@
 CREATE TABLE temp_routes
 (
-  id int NOT NULL IDENTITY(1,1) PRIMARY KEY NONCLUSTERED,
-  route_id nvarchar(100) NOT NULL,
-  agency_id nvarchar(100),
-  route_short_name nvarchar(50) NOT NULL,
-  route_long_name nvarchar(150),
-  route_desc nvarchar(1000),
-  route_type int NOT NULL,
-  route_url nvarchar(150),
-  route_color nvarchar(50) default 'FFFFFF',
-  route_text_color nvarchar(50) default '000000',
+  id INT NOT NULL IDENTITY(1,1) PRIMARY KEY NONCLUSTERED,
+  route_id VARCHAR(100) NOT NULL,
+  agency_id VARCHAR(100),
+  route_short_name VARCHAR(50) NOT NULL,
+  route_long_name VARCHAR(150),
+  route_desc VARCHAR(1000),
+  route_type INT NOT NULL,
+  route_url VARCHAR(150),
+  route_color VARCHAR(50) DEFAULT 'FFFFFF',
+  route_text_color VARCHAR(50) DEFAULT '000000',
+  import_package VARCHAR(50),
   CONSTRAINT uc_temp_Routes UNIQUE (route_id)
 );
