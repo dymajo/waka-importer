@@ -131,11 +131,14 @@ abstract class MultiImporter extends BaseImporter {
           log.info({ path, name }, 'Renaming feed')
           renameSync(path, `${path}-original.zip`)
           renameSync(`${path}-compressed.zip`, path)
-          log.info({ path, name }, 'Renamed feed - will import optimized version')
+          log.info(
+            { path, name },
+            'Renamed feed - will import optimized version',
+          )
         } catch (error) {
           log.error({ error }, 'Failed to optimize')
         }
-      })
+      }),
     )
   }
 
