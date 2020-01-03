@@ -56,6 +56,8 @@ abstract class BaseImporter {
 
   abstract download(): void
 
+  abstract optimize(): void
+
   abstract unzip(): void
 
   abstract db(importer: GtfsImport): void
@@ -65,15 +67,15 @@ abstract class BaseImporter {
   files: {
     name: string
     table:
-      | 'agency'
-      | 'stops'
-      | 'routes'
-      | 'trips'
-      | 'stop_times'
-      | 'calendar'
-      | 'calendar_dates'
-      | 'transfers'
-      | 'frequencies'
+    | 'agency'
+    | 'stops'
+    | 'routes'
+    | 'trips'
+    | 'stop_times'
+    | 'calendar'
+    | 'calendar_dates'
+    | 'transfers'
+    | 'frequencies'
     versioned: boolean
   }[]
 
