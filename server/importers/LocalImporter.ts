@@ -15,10 +15,10 @@ interface LocalImporterProps {
 }
 
 class LocalImporter extends BaseImporter {
-  zipname: string
+  private readonly zipname: string
 
-  zipLocation: string
-  constructor(props: LocalImporterProps) {
+  private readonly zipLocation: string
+  public constructor(props: LocalImporterProps) {
     super()
     const { zipname } = props
     this.zipname = zipname
@@ -26,7 +26,7 @@ class LocalImporter extends BaseImporter {
     this.zipLocation = join(__dirname, `../../cache/${this.zipname}.zip`)
   }
 
-  download = async () => {
+  public download = async () => {
     return new Promise<void>((resolve, reject) => {
       const exists = existsSync(this.zipLocation)
       if (exists) {
@@ -36,24 +36,24 @@ class LocalImporter extends BaseImporter {
     })
   }
 
-  unzip = async () => {
+  public unzip = async () => {
     log.info('Unzipping GTFS Data')
     const { zipLocation } = this
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       extract(
         zipLocation,
         {
           dir: _resolve(`${zipLocation}unarchived`),
         },
         err => {
-          if (err) reject(err)
+          if (err !== undefined) {reject(err)}
           resolve()
         },
       )
     })
   }
 
-  db = async (importer: GtfsImport) => {
+  public db = async (importer: GtfsImport) => {
     for (const file of this.files) {
       try {
         await importer.upload(
@@ -69,7 +69,7 @@ class LocalImporter extends BaseImporter {
     }
   }
 
-  shapes = async () => {
+  public shapes = async () => {
     if (!existsSync(this.zipLocation)) {
       log.error('Shapes could not be found!')
       return
@@ -89,7 +89,7 @@ class LocalImporter extends BaseImporter {
     if (existsSync(outputDir2)) {
       await new Promise<void>((resolve, reject) => {
         rimraf(outputDir2, err => {
-          if (err) reject(err)
+          if (err !== undefined) {reject(err)}
           resolve()
         })
       })
@@ -103,7 +103,7 @@ class LocalImporter extends BaseImporter {
       .replace('.', '-')
       .replace('_', '-')
     await creator.upload(
-      config.shapesContainer || containerName,
+      config.shapesContainer !== '' ? config.shapesContainer : containerName,
       _resolve(outputDir, config.version),
       config.prefix,
     )

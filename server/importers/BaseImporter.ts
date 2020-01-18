@@ -52,15 +52,15 @@ abstract class BaseImporter {
     this.shapeFile = 'shapes.txt'
   }
 
-  postImport?(): void
+  postImport?(): Promise<void>
 
-  abstract download(): void
+  abstract download(): Promise<void>
 
-  abstract unzip(): void
+  abstract unzip(): Promise<void>
 
-  abstract db(importer: GtfsImport): void
+  abstract db(importer: GtfsImport): Promise<void>
 
-  abstract shapes(): void
+  abstract shapes(): Promise<void>
 
   files: {
     name: string

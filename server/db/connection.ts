@@ -28,30 +28,23 @@ const connectMaster = async () => {
   return true
 }
 
-let cresolve: (value?: {} | PromiseLike<{}>) => void
-let creject: (reason?: any) => void
+let cresolve: () => void
+let creject: (err: Error) => void
 let pool1: ConnectionPool
-const ready = new Promise((resolve, reject) => {
+const ready = new Promise<void>((resolve, reject) => {
   cresolve = resolve
   creject = reject
 })
 const connection = {
   get: () => pool1,
-  open: () => {
-    connectMaster()
-      .then(() => {
-        pool1 = new ConnectionPool(config.db, err => {
-          if (err) {
-            log.error(err)
-            return creject()
-          }
-          return cresolve()
-        })
-        return pool1
-      })
-      .catch(err => {
-        throw err
-      })
+  open: async () => {
+    await connectMaster()
+    pool1 = new ConnectionPool(config.db, (err: Error) => {
+      if (err !== undefined) {
+        return creject(err)
+      }
+      return cresolve()
+    })
     return ready
   },
   isReady: ready,

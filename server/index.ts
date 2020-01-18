@@ -27,7 +27,7 @@ Object.keys(config).forEach(key => {
   return true
 })
 
-const checkCreated = async () => {
+const checkCreated = async (): Promise<boolean> => {
   const sqlRequest = connection.get().request()
   const databaseCreated = await sqlRequest.query<{ dbcreated: number }>(
     `
@@ -37,57 +37,65 @@ const checkCreated = async () => {
   return !(databaseCreated.recordset[0].dbcreated === null)
 }
 
-const start = async () => {
-  await connection.open()
+const start = async (): Promise<never> => {
+    await connection.open()
 
-  log.info('Connected to Database')
-  const created = await checkCreated()
-  if (!created) {
-    log.info('Building Database from Template')
-    const creator = new CreateDb()
-    await creator.start()
+    log.info('Connected to Database')
+    const created = await checkCreated()
+    if (!created) {
+      log.info('Building Database from Template')
+      const creator = new CreateDb()
+      await creator.start()
+    }
+
+    log.info('Worker Ready')
+    const importer = new Importer({
+      keyvalue: config.keyValue,
+      keyvalueVersionTable: config.keyValueVersionTable,
+      keyvalueRegion: config.keyValueRegion,
+    })
+    const { mode } = config
+    switch (mode) {
+      case 'all':
+        log.info('Started import of ALL')
+        await importer.start(created)
+        break
+      case 'db':
+        log.info('Started import of DB')
+        await importer.db()
+        break
+      case 'shapes':
+        log.info('Started import of SHAPES')
+        await importer.shapes()
+        break
+      case 'unzip':
+        log.info('Started UNZIP')
+        await importer.unzip()
+        break
+      case 'download':
+        log.info('Started DOWNLOAD')
+        await importer.download()
+        break
+      case 'export':
+        log.info('Started EXPORT')
+        await importer.exportDb()
+        break
+      case 'fullshapes':
+        log.info('Started FULL SHAPES')
+        await importer.fullShapes()
+        break
+      default:
+        break
+    }
+    log.info(`Completed ${mode.toUpperCase()}`)
+    process.exit(0)
   }
 
-  log.info('Worker Ready')
-  const importer = new Importer({
-    keyvalue: config.keyValue,
-    keyvalueVersionTable: config.keyValueVersionTable,
-    keyvalueRegion: config.keyValueRegion,
-  })
-  const { mode } = config
-  switch (mode) {
-    case 'all':
-      log.info('Started import of ALL')
-      await importer.start(created)
-      break
-    case 'db':
-      log.info('Started import of DB')
-      await importer.db()
-      break
-    case 'shapes':
-      log.info('Started import of SHAPES')
-      await importer.shapes()
-      break
-    case 'unzip':
-      log.info('Started UNZIP')
-      await importer.unzip()
-      break
-    case 'download':
-      log.info('Started DOWNLOAD')
-      await importer.download()
-      break
-    case 'export':
-      log.info('Started EXPORT')
-      await importer.exportDb()
-      break
-    case 'fullshapes':
-      log.info('Started FULL SHAPES')
-      await importer.fullShapes()
-      break
-    default:
-      break
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+;(async () => {
+  try {
+    await start()
+  } catch (error) {
+    log.error(error)
   }
-  log.info(`Completed ${mode.toUpperCase()}`)
-  process.exit(0)
-}
-start()
+})()

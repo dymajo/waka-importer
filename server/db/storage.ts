@@ -1,11 +1,10 @@
+import AWS from 'aws-sdk'
+import { PutObjectRequest } from 'aws-sdk/clients/s3'
+import axios from 'axios'
 import FormData from 'form-data'
 import { createReadStream } from 'fs'
-import axios from 'axios'
-import { PutObjectRequest } from 'aws-sdk/clients/s3'
-import AWS from 'aws-sdk'
-import { ServerResponse } from 'http'
-import logger from '../logger'
 import config from '../config'
+import logger from '../logger'
 
 const log = logger(config.prefix, config.version)
 interface StorageProps {
@@ -15,9 +14,9 @@ interface StorageProps {
 }
 
 class Storage {
-  backing?: string
-  s3?: AWS.S3
-  constructor(props: StorageProps) {
+  private readonly backing?: string
+  private readonly s3?: AWS.S3
+  public constructor(props: StorageProps) {
     this.backing = props.backing
     if (this.backing === 'aws') {
       // const credentials = new AWS.SharedIniFileCredentials({
@@ -31,50 +30,12 @@ class Storage {
     }
   }
 
-  createContainer(container: string, cb: any) {
-    const createCb = (error: any) => {
-      if (error) {
-        log.error(error)
-        throw error
-      }
-      cb()
-    }
-    if (this.backing === 'aws' && this.s3) {
-      const params = {
-        Bucket: container,
-      }
-      this.s3.createBucket(params, createCb)
-    }
-  }
-
-  downloadStream = async (
+  public readonly uploadFile = async (
     container: string,
     file: string,
-    stream: ServerResponse,
-    callback: (error: any, data?: any) => void,
+    sourcePath: string,
   ) => {
-    if (this.backing === 'aws' && this.s3) {
-      const params = {
-        Bucket: container,
-        Key: file,
-      }
-      return this.s3
-        .getObject(params)
-        .createReadStream()
-        .on('error', err => {
-          // if (err.code !== 'NoSuchKey') {
-          log.error(err)
-          // }
-          callback(err)
-        })
-        .on('end', (data: any) => callback(null, data)) // do nothing, but this prevents from crashing
-        .pipe(stream)
-    }
-    return null
-  }
-
-  uploadFile = async (container: string, file: string, sourcePath: string) => {
-    if (this.backing === 'aws' && this.s3) {
+    if (this.backing === 'aws' && this.s3 !== undefined) {
       const params: PutObjectRequest = {
         Body: createReadStream(sourcePath),
         Bucket: container,

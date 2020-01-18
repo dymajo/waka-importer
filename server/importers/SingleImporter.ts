@@ -18,12 +18,11 @@ interface SingleImporterProps {
 }
 
 abstract class SingleImporter extends BaseImporter {
-  zipname: string
-  url: string
-
-  zipLocation: string
-  downloadOptions: { url: any }
-  constructor(props: SingleImporterProps) {
+  private readonly zipname: string
+  private readonly url: string
+  private readonly zipLocation: string
+  private readonly downloadOptions: { url: string }
+  public constructor(props: SingleImporterProps) {
     super()
     const { zipname, url } = props
     this.zipname = zipname
@@ -33,7 +32,7 @@ abstract class SingleImporter extends BaseImporter {
     this.downloadOptions = { url: this.url }
   }
 
-  download = async () => {
+  public download = async () => {
     try {
       log.info('Downloading GTFS Data')
       const res = await axios.get(this.downloadOptions.url, {
@@ -53,24 +52,24 @@ abstract class SingleImporter extends BaseImporter {
     }
   }
 
-  unzip = async () => {
+  public unzip = async () => {
     log.info('Unzipping GTFS Data')
     const { zipLocation } = this
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       extract(
         zipLocation,
         {
           dir: _resolve(`${zipLocation}unarchived`),
         },
         err => {
-          if (err) reject(err)
+          if (err !== undefined) {reject(err)}
           resolve()
         },
       )
     })
   }
 
-  db = async (importer: GtfsImport) => {
+  public db = async (importer: GtfsImport) => {
     for (const file of this.files) {
       try {
         await importer.upload(
@@ -86,7 +85,7 @@ abstract class SingleImporter extends BaseImporter {
     }
   }
 
-  shapes = async () => {
+  public shapes = async () => {
     if (!existsSync(this.zipLocation)) {
       log.error('Shapes could not be found!')
       return
@@ -106,7 +105,7 @@ abstract class SingleImporter extends BaseImporter {
     if (existsSync(outputDir2)) {
       await new Promise<void>((resolve, reject) => {
         rimraf(outputDir2, err => {
-          if (err) reject(err)
+          if (err !== undefined) {reject(err)}
           resolve()
         })
       })
@@ -120,7 +119,9 @@ abstract class SingleImporter extends BaseImporter {
       .replace('.', '-')
       .replace('_', '-')
     await creator.upload(
-      config.shapesContainer || containerName,
+      config.shapesContainer !== undefined
+        ? config.shapesContainer
+        : containerName,
       _resolve(outputDir, config.version),
       config.prefix,
     )

@@ -1,8 +1,17 @@
 import config from '../../config'
-import logger from '../../logger'
 import MultiImporter from '../MultiImporter'
 
-const locations = [
+interface Location {
+  endpoint: string
+  type: string
+  name: string
+}
+const locations: Location[] = [
+  {
+    endpoint: 'https://opendata.transport.nsw.gov.au/node/6438/download',
+    type: 'lightrail',
+    name: 'l2',
+  },
   {
     endpoint:
       'https://api.transport.nsw.gov.au/v1/gtfs/schedule/ferries/sydneyferries',
@@ -193,7 +202,7 @@ const locations = [
 ]
 
 class SydneyImporter extends MultiImporter {
-  constructor() {
+  public constructor() {
     super({
       authorization: config.tfnswApiKey,
       batchSize: 6,

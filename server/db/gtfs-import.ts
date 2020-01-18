@@ -22,6 +22,7 @@ import {
 
 import { badTfnsw, nzAklRouteColor } from './bad'
 import { isKeyof } from '../importers'
+import { SafeAny } from '../types'
 
 const log = logger(config.prefix, config.version)
 const primaryKeys = {
@@ -35,7 +36,7 @@ const primaryKeys = {
   frequencies: 'trip_id',
 }
 
-const creators = {
+const creators: { [table_name: string]: (table: Table) => Table } = {
   agency: agencyCreator,
   stops: stopsCreator,
   routes: routesCreator,
@@ -57,7 +58,7 @@ const dayOfTheWeek = (column: string) =>
   column === 'sunday'
 
 class GtfsImport {
-  private getTable = (
+  private readonly getTable = (
     name:
       | 'agency'
       | 'stops'
@@ -83,8 +84,8 @@ class GtfsImport {
     return creators[name](table)
   }
 
-  private mapRowToRecord = (
-    row: any[],
+  private readonly mapRowToRecord = (
+    row: SafeAny[],
     rowSchema: { [key: string]: number },
     tableSchema: string[],
     endpoint?: string,
@@ -154,7 +155,7 @@ class GtfsImport {
           splitRow[0] %= 24
           if (column === 'arrival_time') {
             arrival_time_24 = true
-          } else if (column === 'departure_time') {
+          } else {
             departure_time_24 = true
           }
         }
@@ -171,12 +172,15 @@ class GtfsImport {
         return departure_time_24
       }
       if (column === 'route_short_name' && row[rowSchema[column]] === '') {
-        row[rowSchema[column]] = row[rowSchema.route_id]
+        throw Error('check when this happens')
+        // row[rowSchema[column]] = row[rowSchema.route_id]
       }
       if (column === 'import_package') {
         return endpoint
       }
-      return row[rowSchema[column]] || null
+      return row[rowSchema[column]] !== undefined
+        ? row[rowSchema[column]]
+        : null
     })
   }
 
@@ -209,7 +213,9 @@ class GtfsImport {
     let table = merge
       ? this.getTable(file.table, `temp_${file.table}`, true)
       : this.getTable(file.table)
-    if (table === null) return
+    if (table === null) {
+      return
+    }
     const logstr = file.table.toString()
     await new Promise<void>((resolve, reject) => {
       const input = createReadStream(_resolve(location, file.name))
@@ -234,14 +240,14 @@ class GtfsImport {
           callback(null)
         } else {
           const processRow = async () => {
-            if (row && row.length > 1) {
+            if (row.length > 1) {
               const tableSchema = isKeyof(schemas, file.table)
                 ? schemas[file.table]
                 : null
-              if (!tableSchema) {
+              if (tableSchema === null) {
                 throw new Error()
               }
-              if (tableSchema) {
+              if (tableSchema !== null) {
                 const record = this.mapRowToRecord(
                   row,
                   headers,
@@ -261,7 +267,7 @@ class GtfsImport {
                     .join('')
                 }
                 if (file.table === 'routes' && config.prefix === 'nz-akl') {
-                  if (!record[7]) {
+                  if (record[7] === undefined) {
                     const { routeColor, textColor } = nzAklRouteColor(
                       record[1],
                       record[2],
@@ -271,7 +277,7 @@ class GtfsImport {
                   }
                 }
                 if (file.table === 'stops' && config.prefix === 'us-bos') {
-                  if (!record[5] || record[6]) {
+                  if (record[5] === undefined || record[6] !== undefined) {
                     return
                   }
                 }
@@ -299,7 +305,7 @@ class GtfsImport {
                     ) {
                       return
                     }
-                    if (!record[4]) {
+                    if (record[4] === undefined) {
                       record[4] = tripId.tripName
                     }
                     record[10] = tripId.numberOfCars
@@ -326,7 +332,7 @@ class GtfsImport {
 
           // assembles our CSV into JSON
           if (transactions < config.db.transactionLimit) {
-            processRow()
+            await processRow()
             callback(null)
           } else {
             log.info(endpoint, logstr, `${totalTransactions / 1000}k Rows`)
@@ -336,7 +342,7 @@ class GtfsImport {
               transactions = 0
 
               table = this.getTable(file.table)
-              processRow()
+              await processRow()
               callback(null)
             } catch (err) {
               log.error(err)
@@ -377,7 +383,7 @@ class GtfsImport {
     })
   }
 
-  private commit = async (table: Table) => {
+  private readonly commit = async (table: Table) => {
     try {
       await connection
         .get()
@@ -388,7 +394,7 @@ class GtfsImport {
     }
   }
 
-  private mergeToFinal = async (
+  private readonly mergeToFinal = async (
     table:
       | 'agency'
       | 'stops'

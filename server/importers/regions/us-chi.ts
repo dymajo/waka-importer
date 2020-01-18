@@ -14,11 +14,11 @@ class ChicagoImporter extends SingleImporter {
     })
   }
   postImport = async () => {
-    const sqlRequest = await connection.get().request()
+    const sqlRequest = connection.get().request()
     await sqlRequest.query(`
-    update routes
-    set agency_id = (select top(1) agency_id from agency)
-    where agency_id is null;
+      update routes
+      set agency_id = (select top(1) agency_id from agency)
+      where agency_id is null;
     `)
     log.info(
       `${config.prefix} ${config.version}`,

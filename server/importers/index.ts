@@ -25,6 +25,8 @@ import LocalImporter from './LocalImporter'
 import PerthImporter from './regions/au-per'
 import ChicagoImporter from './regions/us-chi'
 import BostonImporter from './regions/us-bos'
+import AmtrakImporter from './regions/us-atk'
+import { SafeAny } from '../types'
 
 const log = logger(config.prefix, config.version)
 
@@ -40,6 +42,7 @@ const regions = {
   'nz-otg': OtagoImporter,
   'nz-wlg': WellingtonImporter,
   'au-cbr': CanberraImporter,
+  'us-atk': AmtrakImporter,
   'us-bos': BostonImporter,
   'us-chi': ChicagoImporter,
   'us-sfo': SFOImporter,
@@ -55,22 +58,26 @@ interface ImporterProps {
 
 export function isKeyof<T extends object>(
   obj: T,
-  possibleKey: keyof any,
+  possibleKey: keyof SafeAny,
 ): possibleKey is keyof T {
   return possibleKey in obj
 }
 
 class Importer {
-  importer: GtfsImport
-  storage: Storage
-  versions: KeyvalueDynamo | null
-  current: BaseImporter | null
-  constructor(props: ImporterProps) {
+  private readonly importer: GtfsImport
+  private readonly storage: Storage
+  private readonly versions: KeyvalueDynamo | null
+  private readonly current: BaseImporter | null
+  public constructor(props: ImporterProps) {
     const { keyvalue, keyvalueVersionTable, keyvalueRegion } = props
     this.importer = new GtfsImport()
     this.storage = new Storage({})
     this.versions = null
-    if (keyvalue === 'dynamo' && keyvalueVersionTable && keyvalueRegion) {
+    if (
+      keyvalue === 'dynamo' &&
+      keyvalueVersionTable !== undefined &&
+      keyvalueRegion !== undefined
+    ) {
       this.versions = new KeyvalueDynamo({
         name: keyvalueVersionTable,
         region: keyvalueRegion,
@@ -78,7 +85,7 @@ class Importer {
     }
 
     this.current = null
-    if (config.localImport && config.localFile) {
+    if (config.localImport !== undefined && config.localFile !== undefined) {
       this.current = new LocalImporter({
         zipname: config.localFile,
       })
@@ -98,14 +105,14 @@ class Importer {
     }
   }
 
-  start = async (created = false) => {
-    if (!this.current) {
+  public start = async (created = false) => {
+    if (this.current === null) {
       return
     }
 
     const { versions } = this
     const versionId = config.db.database
-    if (versions) {
+    if (versions !== null) {
       const version = await versions.get(versionId)
       let newStatus
       if (version.status === 'pendingimport') {
@@ -140,7 +147,7 @@ class Importer {
     await this.shapes()
     // await this.exportDb()
 
-    if (versions) {
+    if (versions !== null) {
       const version = await versions.get(versionId)
       let newStatus
       if (version.status === 'importing') {
@@ -156,35 +163,40 @@ class Importer {
     }
   }
 
-  unzip = async () => {
-    if (this.current) await this.current.unzip()
+  public unzip = async () => {
+    if (this.current !== null) {
+      await this.current.unzip()
+    }
   }
 
-  download = async () => {
-    if (this.current) await this.current.download()
+  public download = async () => {
+    if (this.current !== null) {
+      await this.current.download()
+    }
   }
 
-  db = async () => {
-    if (this.current) await this.current.db(this.importer)
+  public db = async () => {
+    if (this.current !== null) {
+      await this.current.db(this.importer)
+    }
   }
 
-  shapes = async () => {
-    if (this.current) await this.current.shapes()
+  public shapes = async () => {
+    if (this.current !== null) {
+      await this.current.shapes()
+    }
   }
 
-  fullShapes = async () => {
-    if (this.current) {
+  public fullShapes = async () => {
+    if (this.current !== null) {
       await this.current.download()
       await this.current.unzip()
       await this.current.shapes()
-      await this.fixStopCodes()
-      await this.fixRoutes()
-      await this.addGeoLocation()
       await this.postImport()
     }
   }
 
-  fixStopCodes = async () => {
+  private readonly fixStopCodes = async () => {
     // GTFS says it's optional, but Waka uses stop_code for stop lookups
     const sqlRequest = connection.get().request()
     const res = await sqlRequest.query(`
@@ -199,7 +211,7 @@ class Importer {
     )
   }
 
-  fixRoutes = async () => {
+  private readonly fixRoutes = async () => {
     const sqlRequest = connection.get().request()
     const res = await sqlRequest.query(`
       UPDATE routes
@@ -213,7 +225,7 @@ class Importer {
     )
   }
 
-  fixPickupType = async () => {
+  private readonly fixPickupType = async () => {
     const sqlRequest = connection.get().request()
     const res = await sqlRequest.query(`
       UPDATE stop_times
@@ -227,7 +239,7 @@ class Importer {
     )
   }
 
-  fixDropOffType = async () => {
+  private readonly fixDropOffType = async () => {
     const sqlRequest = connection.get().request()
     const res = await sqlRequest.query(`
       UPDATE stop_times
@@ -241,7 +253,7 @@ class Importer {
     )
   }
 
-  addGeoLocation = async () => {
+  private readonly addGeoLocation = async () => {
     const sqlRequest = connection.get().request()
     const res = await sqlRequest.query(`
       UPDATE stops
@@ -254,7 +266,7 @@ class Importer {
     )
   }
 
-  dumpTempTables = async () => {
+  private readonly dumpTempTables = async () => {
     const sqlRequest = connection.get().request()
     try {
       const res = await sqlRequest.query(`
@@ -273,13 +285,13 @@ class Importer {
     }
   }
 
-  postImport = async () => {
-    if (this.current && this.current.postImport) {
+  private readonly postImport = async () => {
+    if (this.current?.postImport !== undefined) {
       await this.current.postImport()
     }
   }
 
-  exportDb = async () => {
+  public exportDb = async () => {
     const sqlRequest = connection.get().request()
     const {
       db: { database },

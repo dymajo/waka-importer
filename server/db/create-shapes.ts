@@ -17,7 +17,7 @@ const log = logger(config.prefix, config.version)
 function readdirAsync(path: string) {
   return new Promise<string[]>((resolve, reject) => {
     readdir(path, (error, result) => {
-      if (error) {
+      if (error !== null) {
         reject(error)
       } else {
         resolve(result)
@@ -27,9 +27,9 @@ function readdirAsync(path: string) {
 }
 
 class CreateShapes {
-  storageSvc: Storage
+  private readonly storageSvc: Storage
 
-  constructor() {
+  public constructor() {
     this.storageSvc = new Storage({
       backing: config.storageService,
       region: config.shapesRegion,
@@ -91,7 +91,7 @@ class CreateShapes {
             let subfolder =
               versions.length === 1 ? versions[0] : `${versions[0]}-extra`
             versions.forEach(version => {
-              if (key.match(version)) {
+              if (key.match(version) !== null) {
                 subfolder = version
               }
             })
@@ -148,7 +148,7 @@ class CreateShapes {
         // )
       } catch (error) {
         failed += 1
-        if (error.toJSON) {
+        if (error.toJSON !== undefined) {
           log.error(error.toJSON())
         } else {
           log.error(error)
@@ -164,7 +164,7 @@ class CreateShapes {
     }
   }
 
-  private uploadSingle = async (
+  private readonly uploadSingle = async (
     fileName: string,
     directory: string,
     container: string,

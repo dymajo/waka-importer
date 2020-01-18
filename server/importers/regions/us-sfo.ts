@@ -1,7 +1,7 @@
 import MultiImporter from '../MultiImporter'
 
 class SanFranciscoImporter extends MultiImporter {
-  constructor() {
+  public constructor() {
     super({
       locations: [
         {

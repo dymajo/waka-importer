@@ -20,15 +20,13 @@ class AucklandImporter extends SingleImporter {
   }
 
   postImport = async () => {
-    const sqlRequest = await connection.get().request()
+    const sqlRequest = connection.get().request()
     await sqlRequest.query(`
       UPDATE routes
       SET route_type = '712'
       WHERE route_short_name LIKE '0__' OR route_short_name LIKE '4__' OR (route_short_name LIKE '5__' and agency_id <> 'WBC') OR route_short_name = '220'
     `)
-    log.info(
-      'Post Import: Updated Schools Routes to route_type 712',
-    )
+    log.info('Post Import: Updated Schools Routes to route_type 712')
   }
 }
 
