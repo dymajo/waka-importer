@@ -34,7 +34,6 @@ BEGIN
 		st.arrival_time_24,
 		st.departure_time,
 		st.departure_time_24,
-		st.stop_id,
 		st.pickup_type,
 		st.drop_off_type,
 		t.trip_headsign,
@@ -50,6 +49,7 @@ BEGIN
 		r.route_color,
 		r.route_text_color,
 		s.stop_name,
+		s.stop_code AS stop_id,
 		p.stop_name AS parent_station
 	FROM [dbo].[stop_times] st
 		LEFT JOIN [dbo].[stops] s
