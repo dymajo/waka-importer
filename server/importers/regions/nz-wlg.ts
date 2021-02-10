@@ -10,7 +10,7 @@ class WellingtonImporter extends SingleImporter {
     super({
       zipname: 'metlink',
       url:
-        'https://old.metlink.org.nz/assets/Google_Transit/google-transit.zip',
+        'https://www.metlink.org.nz/assets/Google_Transit/google-transit.zip',
     })
   }
 
