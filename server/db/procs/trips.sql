@@ -1,15 +1,19 @@
-CREATE TABLE trips (
-  id int NOT NULL IDENTITY(1,1) PRIMARY KEY NONCLUSTERED,
-  route_id nvarchar(100) NOT NULL,
-  service_id nvarchar(100) NOT NULL,
-  trip_id nvarchar(100) NOT NULL,
-  trip_headsign nvarchar(100),
-  trip_short_name nvarchar(50),
-  direction_id int,
-  block_id nvarchar(100),
-  shape_id nvarchar(100),
-  wheelchair_accessible int,
-  bikes_allowed int,
+CREATE TABLE trips
+(
+  id INT NOT NULL IDENTITY(1,1) PRIMARY KEY NONCLUSTERED,
+  route_id VARCHAR(100) NOT NULL,
+  service_id VARCHAR(100) NOT NULL,
+  trip_id VARCHAR(100) NOT NULL,
+  trip_headsign VARCHAR(100),
+  trip_short_name VARCHAR(50),
+  direction_id INT,
+  block_id VARCHAR(100),
+  shape_id VARCHAR(100),
+  wheelchair_accessible INT,
+  bikes_allowed INT,
+  consist INT,
+  set_type VARCHAR(50),
+  import_package VARCHAR(50),
   CONSTRAINT uc_Trips UNIQUE (trip_id)
 );
 

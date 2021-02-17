@@ -8,6 +8,7 @@ const schemas = {
     'agency_phone',
     'agency_fare_url',
     'agency_email',
+    'import_package',
   ],
   stops: [
     'stop_id',
@@ -22,6 +23,7 @@ const schemas = {
     'parent_station',
     'stop_timezone',
     'wheelchair_boarding',
+    'import_package',
   ],
   routes: [
     'route_id',
@@ -33,6 +35,7 @@ const schemas = {
     'route_url',
     'route_color',
     'route_text_color',
+    'import_package',
   ],
   trips: [
     'route_id',
@@ -45,6 +48,9 @@ const schemas = {
     'shape_id',
     'wheelchair_accessible',
     'bikes_allowed',
+    'consist',
+    'set_type',
+    'import_package',
   ],
   stop_times: [
     'trip_id',
@@ -59,6 +65,7 @@ const schemas = {
     'drop_off_type',
     'shape_dist_traveled',
     'timepoint',
+    'import_package',
   ],
   calendar: [
     'service_id',
@@ -71,13 +78,15 @@ const schemas = {
     'sunday',
     'start_date',
     'end_date',
+    'import_package',
   ],
-  calendar_dates: ['service_id', 'date', 'exception_type'],
+  calendar_dates: ['service_id', 'date', 'exception_type', 'import_package'],
   transfers: [
     'from_stop_id',
     'to_stop_id',
     'transfer_type',
     'min_transfer_time',
+    'import_package',
   ],
   frequencies: [
     'trip_id',
@@ -85,6 +94,7 @@ const schemas = {
     'end_time',
     'headway_sec',
     'exact_times',
+    'import_package',
   ],
 }
 
