@@ -9,18 +9,23 @@ class WellingtonImporter extends SingleImporter {
   constructor() {
     super({
       zipname: 'metlink',
-      url:
-        'https://www.metlink.org.nz/assets/Google_Transit/google-transit.zip',
+      url: 'https://static.opendata.metlink.org.nz/v1/gtfs/full.zip',
     })
   }
 
   postImport = async () => {
     const sqlRequest = connection.get().request()
+    // used to work, no longer :(
+    // await sqlRequest.query(`
+    //   UPDATE trips
+    //   SET trips.trip_headsign = stop_times.stop_headsign
+    //   FROM trips JOIN stop_times ON trips.trip_id = stop_times.trip_id
+    //   WHERE stop_sequence = 0 and trips.trip_headsign is null;
+    // `)
+
     await sqlRequest.query(`
       UPDATE trips
-      SET trips.trip_headsign = stop_times.stop_headsign
-      FROM trips JOIN stop_times ON trips.trip_id = stop_times.trip_id
-      WHERE stop_sequence = 0 and trips.trip_headsign is null;
+      SET trips.trip_headsign = '';
     `)
     log.info('Post Import: Completed Trip Headsign Override')
 

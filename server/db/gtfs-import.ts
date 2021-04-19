@@ -89,7 +89,7 @@ class GtfsImport {
   ): string[] => {
     let arrival_time_24 = false
     let departure_time_24 = false
-    return tableSchema.map((column) => {
+    return tableSchema.map(column => {
       if (column.split('_')[1] === 'id') {
         return row[rowSchema[column]]
       }
@@ -251,13 +251,13 @@ class GtfsImport {
                 if (
                   file.table === 'agency' &&
                   !Object.keys(headers).some(
-                    (header) => header === 'agency_id',
+                    header => header === 'agency_id',
                   ) &&
                   record[0] === null
                 ) {
                   record[0] = record[1]
                     .split(' ')
-                    .map((word) => word[0])
+                    .map(word => word[0])
                     .join('')
                 }
                 if (file.table === 'routes' && config.prefix === 'nz-akl') {
@@ -273,6 +273,12 @@ class GtfsImport {
                 if (file.table === 'stops' && config.prefix === 'us-bos') {
                   if (!record[5] || record[6]) {
                     return
+                  }
+                }
+                // trim for wellington
+                if (file.table === 'trips' && config.prefix === 'nz-wlg') {
+                  if (record[3]) {
+                    record[3] = record[3].substring(0, 99)
                   }
                 }
                 if (
@@ -293,7 +299,7 @@ class GtfsImport {
                       tripInstance: split[6],
                     }
                     if (
-                      badTfnsw.some((e) => {
+                      badTfnsw.some(e => {
                         return e.trip === tripId.tripName
                       })
                     ) {
@@ -345,7 +351,7 @@ class GtfsImport {
           }
         }
       })
-      transformer.on('error', (err) => {
+      transformer.on('error', err => {
         log.info(err)
       })
       transformer.on('finish', async () => {
@@ -379,7 +385,10 @@ class GtfsImport {
 
   private readonly commit = async (table: Table) => {
     try {
-      await connection.get().request().bulk(table)
+      await connection
+        .get()
+        .request()
+        .bulk(table)
     } catch (error) {
       log.error(error)
     }
@@ -400,7 +409,7 @@ class GtfsImport {
     const primaryKey = primaryKeys[table]
     const sqlRequest = connection.get().request()
     const columns = schemas[table].join()
-    const insertColumns = schemas[table].map((col) => `H.${col}`).join()
+    const insertColumns = schemas[table].map(col => `H.${col}`).join()
 
     const merge = await sqlRequest.query(
       `MERGE
