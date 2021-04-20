@@ -52,15 +52,15 @@ BEGIN
 		s.stop_code AS stop_id,
 		p.stop_name AS parent_station
 	FROM [dbo].[stop_times] st
-		LEFT JOIN [dbo].[stops] s
+		INNER JOIN [dbo].[stops] s
 		ON st.stop_id = s.stop_id
 		LEFT JOIN [dbo].[stops] p
 		ON s.parent_station = p.stop_id
-		LEFT JOIN [dbo].[trips] t
+		INNER JOIN [dbo].[trips] t
 		ON st.trip_id = t.trip_id
-		LEFT JOIN [dbo].[routes] r
+		INNER JOIN [dbo].[routes] r
 		ON t.route_id = r.route_id
-		LEFT JOIN [dbo].[calendar] c
+		INNER JOIN [dbo].[calendar] c
 		ON t.service_id = c.service_id
 		LEFT JOIN [dbo].[calendar_dates] cd
 		ON t.service_id = cd.service_id AND

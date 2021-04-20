@@ -29,6 +29,9 @@ class WellingtonImporter extends SingleImporter {
     `)
     log.info('Post Import: Completed Trip Headsign Override')
 
+    await sqlRequest.query(`UPDATE stops SET stops.stop_desc = NULL;`)
+    log.info('Post Import: Completed Stop Description')
+
     await sqlRequest.query(
       "UPDATE routes SET route_color = '333333' WHERE route_color = '000000'",
     )

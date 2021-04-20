@@ -34,12 +34,11 @@ const procs = [
   'GetTimetable.sql',
   'alphasort.sql',
   'GetRoutes.sql',
-  'GetMultiStopTimes.sql',
 ]
 
 const create = async (filenames: string[]) => {
   await Promise.all(
-    filenames.map((filename) => {
+    filenames.map(filename => {
       return connection
         .get()
         .request()

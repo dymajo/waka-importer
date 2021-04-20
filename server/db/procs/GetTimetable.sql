@@ -34,13 +34,13 @@ BEGIN
 		routes.route_long_name,
 		routes.agency_id
 	FROM stop_times
-	LEFT JOIN stops
+	INNER JOIN stops
 		on stop_times.stop_id = stops.stop_id
-	LEFT JOIN trips
+	INNER JOIN trips
 		on stop_times.trip_id = trips.trip_id
-	LEFT JOIN routes
+	INNER JOIN routes
 		on trips.route_id = routes.route_id
-	LEFT JOIN calendar
+	INNER JOIN calendar
 		on trips.service_id = calendar.service_id
 	LEFT JOIN calendar_dates
 		on trips.service_id = calendar_dates.service_id and
