@@ -18,19 +18,25 @@ const log = logger(config.prefix, config.version)
 interface SingleImporterProps {
   zipname: string
   url: string
+  authorization?: string
+  authorizationHeader?: string
 }
 
 abstract class SingleImporter extends BaseImporter {
   zipname: string
   url: string
+  authorization?: string
+  authorizationHeader?: string
 
   zipLocation: string
   downloadOptions: { url: string }
   constructor(props: SingleImporterProps) {
     super()
-    const { zipname, url } = props
+    const { zipname, url, authorization, authorizationHeader } = props
     this.zipname = zipname
     this.url = url
+    this.authorization = authorization
+    this.authorizationHeader = authorizationHeader
 
     this.zipLocation = join(__dirname, `../../cache/${this.zipname}.zip`)
     this.downloadOptions = { url: this.url }
@@ -39,8 +45,10 @@ abstract class SingleImporter extends BaseImporter {
   download = async () => {
     try {
       log.info('Downloading GTFS Data')
+      const requestHeaders = this.authorizationHeader ? { [this.authorizationHeader]: this.authorization } : {}
       const res = await axios.get(this.downloadOptions.url, {
         responseType: 'stream',
+        headers: requestHeaders
       })
       const dest = createWriteStream(this.zipLocation)
       res.data.pipe(dest)

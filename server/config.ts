@@ -9,7 +9,7 @@ import {
   KeyValueCodec,
   PrefixCodec,
   StorageService,
-  StorageServiceCodec,
+  StorageServiceCodec
 } from './types/codec'
 
 const mode: ImportMode =
@@ -28,6 +28,7 @@ const storageService: StorageService =
 const keyValueVersionTable = process.env.KEYVALUE_VERSION_TABLE
 const keyValueRegion = process.env.KEYVALUE_REGION
 const tfnswApiKey = process.env.TFNSW_API_KEY
+const nzchcApiKey = process.env.NZCHC_API_KEY
 const extended = process.env.EXTENDED === 'true'
 const localFile = process.env.LOCAL_FILE
 const localImport = process.env.LOCAL_IMPORT === 'true'
@@ -62,6 +63,7 @@ const config: WakaConfig = {
   keyValueVersionTable,
   keyValueRegion,
   tfnswApiKey,
+  nzchcApiKey,
   extended,
   localFile,
   localImport,

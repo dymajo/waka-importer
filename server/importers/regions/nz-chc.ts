@@ -8,8 +8,10 @@ const log = logger(config.prefix, config.version)
 class ChchImporter extends SingleImporter {
   constructor() {
     super({
+      authorization: config.nzchcApiKey,
+      authorizationHeader: "Ocp-Apim-Subscription-Key",
       zipname: 'metro-christchurch',
-      url: 'http://metroinfo.co.nz/Documents/gtfs.zip',
+      url: 'https://apis.metroinfo.co.nz/rti/gtfs/v1/gtfs.zip',
     })
   }
 

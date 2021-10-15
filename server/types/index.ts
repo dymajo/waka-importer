@@ -14,6 +14,7 @@ export interface WakaConfig {
   keyValueVersionTable?: string
   keyValueRegion?: string
   tfnswApiKey?: string
+  nzchcApiKey?: string
   extended: boolean
   localImport?: boolean
   localFile?: string
@@ -33,13 +34,13 @@ declare const process: {
   env: {
     PREFIX: string
     MODE?:
-      | 'all'
-      | 'db'
-      | 'shapes'
-      | 'unzip'
-      | 'download'
-      | 'export'
-      | 'fullshapes'
+    | 'all'
+    | 'db'
+    | 'shapes'
+    | 'unzip'
+    | 'download'
+    | 'export'
+    | 'fullshapes'
     VERSION: string
     KEYVALUE?: 'dynamo'
     KEYVALUE_VERSION_TABLE?: string
@@ -58,6 +59,7 @@ declare const process: {
     SHAPES_SKIP?: string
     EMULATED_STORAGE?: string
     TFNSW_API_KEY?: string
+    NZCHC_API_KEY?: string
     EXTENDED?: string
     LOCAL_IMPORT?: string
     LOCAL_FILE?: string
