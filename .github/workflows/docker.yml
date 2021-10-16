@@ -50,3 +50,8 @@ jobs:
 
           docker tag image $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+
+          # Also upload with git hash
+          SHA=$(git rev-parse HEAD)
+          docker tag image $IMAGE_ID:$SHA
+          docker push $IMAGE_ID:$SHA
