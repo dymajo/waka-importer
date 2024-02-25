@@ -1,5 +1,8 @@
-FROM golang:1.12-alpine as build
+FROM golang:1.16-alpine as build
 RUN apk add --no-cache git libc-dev
+ENV GOPATH /go
+ENV GOBIN=$GOPATH/bin
+RUN go mod init waka
 RUN go get -v github.com/patrickbr/gtfstidy
 
 FROM node:alpine
