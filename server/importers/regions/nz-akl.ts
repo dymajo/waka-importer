@@ -9,7 +9,7 @@ class AucklandImporter extends SingleImporter {
   constructor() {
     super({
       zipname: 'at',
-      url: 'https://atcdn.blob.core.windows.net/data/gtfs.zip',
+      url: 'https://gtfs.at.govt.nz/gtfs.zip',
     })
   }
 
