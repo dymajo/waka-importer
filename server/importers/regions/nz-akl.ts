@@ -11,12 +11,6 @@ class AucklandImporter extends SingleImporter {
       zipname: 'at',
       url: 'https://atcdn.blob.core.windows.net/data/gtfs.zip',
     })
-    this.files = this.files.map((file) => {
-      if (file.name !== 'agency.txt') {
-        return { ...file, versioned: true }
-      }
-      return file
-    })
   }
 
   postImport = async () => {
