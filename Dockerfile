@@ -1,6 +1,6 @@
-FROM golang:1.16-alpine as build
+FROM golang:1.18-alpine as build
 RUN apk add --no-cache git libc-dev
-RUN go get -v github.com/patrickbr/gtfstidy
+RUN go install github.com/patrickbr/gtfstidy@latest
 
 FROM node:alpine
 
