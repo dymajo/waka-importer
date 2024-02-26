@@ -17,10 +17,11 @@ class AucklandImporter extends SingleImporter {
     const sqlRequest = connection.get().request()
     await sqlRequest.query(`
       UPDATE routes
-      SET route_type = '712'
-      WHERE route_short_name LIKE '0__' OR route_short_name LIKE '4__' OR (route_short_name LIKE '5__' and agency_id <> 'WBC') OR route_short_name = '220'
+      SET routes.route_long_name = trips.trip_headsign
+      FROM routes INNER JOIN trips on routes.route_id = trips.route_id
+      WHERE routes.route_short_name = routes.route_long_name;
     `)
-    log.info('Post Import: Updated Schools Routes to route_type 712')
+    log.info('Post Import: Updated route long names to trip headsign')
   }
 }
 
