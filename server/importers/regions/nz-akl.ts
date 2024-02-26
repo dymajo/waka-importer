@@ -22,6 +22,12 @@ class AucklandImporter extends SingleImporter {
       WHERE routes.route_short_name = routes.route_long_name;
     `)
     log.info('Post Import: Updated route long names to trip headsign')
+
+    await sqlRequest.query(`
+      UPDATE trips
+      SET trip_headsign = RIGHT(trip_headsign, LEN(trip_headsign) - PATINDEX('% To %', trip_headsign) - 3);
+    `)
+    log.info('Post Import: Updated trip headsigns to the headsigns only')
   }
 }
 
