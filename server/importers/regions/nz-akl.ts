@@ -27,8 +27,13 @@ class AucklandImporter extends SingleImporter {
       UPDATE trips
       SET trip_headsign = RIGHT(trip_headsign, LEN(trip_headsign) - PATINDEX('% To %', trip_headsign) - 3)
       WHERE trip_headsign like '%To%';
+      
+      UPDATE trips SET trips.trip_headsign = stop_times.stop_headsign FROM trips
+      INNER JOIN routes on trips.route_id = routes.route_id
+      INNER JOIN stop_times on trips.trip_id = stop_times.trip_id
+      WHERE route_type = 2 and stop_sequence = 1;
     `)
-    log.info('Post Import: Updated trip headsigns to the headsigns only')
+    log.info('Post Import: Updated trip headsigns to the headsigns only & fixed train headsigns')
 
     await sqlRequest.query(`
       UPDATE stop_times
