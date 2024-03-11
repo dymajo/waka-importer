@@ -25,9 +25,20 @@ class AucklandImporter extends SingleImporter {
 
     await sqlRequest.query(`
       UPDATE trips
-      SET trip_headsign = RIGHT(trip_headsign, LEN(trip_headsign) - PATINDEX('% To %', trip_headsign) - 3);
+      SET trip_headsign = RIGHT(trip_headsign, LEN(trip_headsign) - PATINDEX('% To %', trip_headsign) - 3)
+      WHERE trip_headsign like '%To%';
     `)
     log.info('Post Import: Updated trip headsigns to the headsigns only')
+
+    await sqlRequest.query(`
+      UPDATE stop_times
+      SET stop_times.stop_id = stops.parent_station
+      FROM stop_times INNER JOIN stops on stop_times.stop_id = stops.stop_id
+      WHERE stop_name like '%Train Station%' and location_type = 0 and parent_station IS NOT null;
+      UPDATE stops SET location_type = 3 WHERE stop_name like '%Train Station%' and location_type = 0 and parent_station IS NOT null;
+      UPDATE stops SET location_type = 0 WHERE stop_name like '%Train Station%' and location_type = 1;
+    `)
+    log.info('Post Import: Updated train stations to remove platforms')
   }
 }
 
